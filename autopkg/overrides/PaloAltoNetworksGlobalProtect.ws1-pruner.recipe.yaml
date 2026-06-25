@@ -1,0 +1,27 @@
+Identifier: local.ws1-pruner.PaloAltoNetworksGlobalProtect
+Input:
+  NAME: Palo Alto Networks GlobalProtect
+  WS1_API_PASSWORD: API_PASSWORD_HERE
+  WS1_API_TOKEN: API_TOKEN_HERE
+  WS1_API_URL: WORKSPACEONE_API_URL_HERE
+  WS1_API_USERNAME: API_USERNAME_HERE
+  WS1_APP_VERSIONS_TO_KEEP: NUMBER_OF_VERSIONS_TO_KEEP_HERE
+  WS1_B64ENCODED_API_CREDENTIALS: B64ENCODED_API_CREDENTIALS_HERE
+  WS1_CONSOLE_URL: WORKSPACEONE_CONSOLE_URL_HERE
+  WS1_GROUPID: GROUP_ID_HERE
+  WS1_OAUTH_CLIENT_ID: OAUTH2_CLIENT_ID_HERE
+  WS1_OAUTH_CLIENT_SECRET: OAUTH2_CLIENT_CLIENT_SECRET_HERE
+  WS1_OAUTH_TOKEN_URL: OAUTH2_ACCESS_TOKEN_SERVER_URL_HERE
+  WS1_SAFEGUARD_HALT_ON_ASSIGNED: 'False'
+ParentRecipe: com.github.codeskipper.ws1-pruner.PaloAltoNetworksGlobalProtect
+ParentRecipeTrustInfo:
+  non_core_processors:
+    com.github.codeskipper.OMNISSA-WorkSpaceOnePruner/WorkSpaceOnePruner:
+      git_hash: 7070b9589be9e910af3c70817f08e17781d7cdb5
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOnePruner.py
+      sha256_hash: b83a08da867d104eee427eee9ba506362d0bc2db0736c6b71495518c0d4ec793
+  parent_recipes:
+    com.github.codeskipper.ws1-pruner.PaloAltoNetworksGlobalProtect:
+      git_hash: de85f517c60fba1adeb56abd21d46cbe034876d7
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/PaloAltoNetworksGlobalProtect.ws1-pruner.recipe.yaml
+      sha256_hash: 53b6c46943babed6781e5027061c4186ff9776aae54320a4294b0dc9782a2634

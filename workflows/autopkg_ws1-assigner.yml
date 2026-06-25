@@ -1,0 +1,184 @@
+name: AutoPkg WS1 - Assigner
+# Runs the pruner recipes on a Linux runner...
+## Because we now can, and because these recipes do not need to run on macOS.  Linux runners are cheaper.
+
+run-name: AutoPkg Assigner recipes
+
+permissions:
+# workflow needs write permission for both contents and for pull-requests to be able to create PRs with diff for
+# parent recipe changes for updating trust info for recipe overrides
+  contents: read
+  actions: read
+
+on:
+  schedule:
+  # run after 09:00 on Weekdays
+  # Changed to not run at the whole hour to avoid delays due to busy GH server.
+  # Support for timezones is recently added in March 2026 but delays close to two hours are observed.  Hoping GH will address this soon, leaving as-is for now.
+    - cron: "33 09 * * 1-5"
+      timezone: "Europe/Oslo"
+  workflow_dispatch: # manually triggered
+    inputs:
+      recipe:
+        description: Optional recipe to run (e.g. Firefox.ws1-assigner.recipe.yaml)
+        required: false
+      autopkg_verbose:
+        description: AutoPkg verbosity level
+        required: true
+        default: '2'
+        type: choice
+        options:
+            - '0'
+            - '1'
+            - '2'
+            - '3'
+            - '4'
+      ws1_update_assignments:
+        description: update existing assignments as called for by ws1_app_assignments settings
+        required: false
+        default: 'True'
+        type: choice
+        options:
+          - 'False'
+          - 'True'
+
+
+jobs:
+  run-autopkg:
+    runs-on: 'ubuntu-latest'
+    permissions:
+      contents: read
+      actions: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0 # Pin SHA1 hash instead of version
+
+    - name: Set up AutoPkg on Ubuntu
+      # if: runner.os == 'Linux'
+      run: |
+        # Install system dependencies
+        sudo apt-get update
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+          git jq curl wget \
+          libcairo2-dev libmagic-dev \
+          p7zip-full msitools
+
+        # Install uv for fast Python package installation
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        source $HOME/.cargo/env
+
+        # Clone AutoPkg
+        git clone https://github.com/autopkg/autopkg.git ../autopkg
+
+        # Create virtual environment with Python 3.10
+        uv venv --python 3.10 ../autopkg/.venv
+
+        # Install minimal runtime dependencies for AutoPkg, adding 'requests' for ws1-pruner recipes
+        uv pip install --python ../autopkg/.venv/bin/python3 \
+          pyyaml certifi xattr appdirs lxml requests
+
+        # Fix oscrypto issue with new OpenSSL
+        uv pip install --python ../autopkg/.venv/bin/python3 \
+          git+https://github.com/wbond/oscrypto.git
+
+        # Create AutoPkg config directories
+        # mkdir -p ~/Library/AutoPkg ~/.config/Autopkg
+        # echo {} > ~/.config/Autopkg/config.json
+
+        # We've committed autopkg/prefs_linux.json to the repo to hold the prefs on Linux runners.  It has repative paths from
+
+        # Verify AutoPkg works
+        # ./../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg version --prefs=~/.config/Autopkg/config.json
+        ./../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg version --prefs=autopkg/prefs_linux.json
+
+        echo "AutoPkg installation complete"
+
+
+    - name: Add AutoPkg repos
+      run: |
+        # Add the main AutoPkg repo
+        ../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg \
+          repo-add https://github.com/autopkg/WorkSpaceOneImporter-recipes \
+          --prefs=autopkg/prefs_linux.json
+
+
+    - name: Verify AutoPkg preferences
+      run: |
+        echo "Dumping AutoPkg preferences"
+        cat autopkg/prefs_linux.json
+        echo .
+        echo "These are the current AutoPkg preferences"
+        ./../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg \
+          info \
+          --prefs=autopkg/prefs_linux.json
+
+
+#    - name: git checkout WorkSpaceOneImporter-recipes DEV branch
+#      run: |
+#        cd autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes
+#        git checkout dev
+#        cd "$GITHUB_WORKSPACE"
+
+
+    - name: Conditional environment variables for AutoPkg
+      # passing conditional settings for AutoPkg WS1 features as environment variables directly for AutoPkg instead of
+      # as CLI arguments. This simplifies things and improves consistency across launcher script for local testing.
+
+      # Note that these AutoPkg input variables passed as environment variables are case-sensitive, and we can't use
+      # the normal all-caps style.
+      # MUST name 'AUTOPKG_' in all-capitals and use same capitalisation for the remainder for the key name.
+      # So for instance AUTOPKG_ws1_app_versions_to_keep_default works as expected, and
+      # neither AUTOPKG_WS1_APP_VERSIONS_TO_KEEP_DEFAULT nor autopkg_ws1_app_versions_to_keep_default works.
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "We are running the workflow as a manual dispatch, so using dispatch input values"
+          echo "AUTOPKG_verbose=$DISPATCH_AUTOPKG_VERBOSE"  >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_update_assignments=$DISPATCH_WS1_UPDATE_ASSIGNMENTS" >> $GITHUB_ENV
+        else
+          echo "We are running the workflow with an automatic trigger (schedule), so using hardcoded default values"
+          echo "AUTOPKG_verbose=1" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_update_assignments=True" >> $GITHUB_ENV
+        fi
+      env:
+          DISPATCH_AUTOPKG_VERBOSE: ${{ github.event.inputs.autopkg_verbose }}
+          DISPATCH_WS1_UPDATE_ASSIGNMENTS: ${{ github.event.inputs.ws1_update_assignments }}
+
+
+    - name: Run AutoPkg Assigner recipes
+      run: |
+        if [[ -z "$RECIPE_TO_RUN" ]]; then
+          echo "no recipe specified in workflow dispatch as argument, using default recipe_list_assigner.txt"
+          TO_RUN=(--recipe-list autopkg/recipe_list_assigner.txt)  # use zsh array to be able to pass the argument with space in it as intended
+        else
+          echo "using recipe specified in workflow dispatch as argument: $RECIPE_TO_RUN"
+          TO_RUN=("$RECIPE_TO_RUN")
+        fi
+        # run using python3 shipped with AutoPkg
+        # uv run /usr/local/autopkg/python /Library/AutoPkg/autopkg run "${TO_RUN[@]}" \
+        ./../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg run \
+          "${TO_RUN[@]}" \
+          --report-plist autopkg/reports/assigner_report.plist \
+          --post com.github.codeskipper.OMNISSA-WorkSpaceOneSlacker/WorkSpaceOneSlacker \
+          --prefs autopkg/prefs_linux.json \
+          2>&1 | tee autopkg/logs/autopkg_assigner.log
+      env:
+          AUTOPKG_ws1_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RECIPE_TO_RUN: ${{ github.event.inputs.recipe }}
+          AUTOPKG_WS1_OAUTH_CLIENT_ID: ${{ SECRETS.WS1_OAUTH_CLIENT_ID }}
+          AUTOPKG_WS1_OAUTH_CLIENT_SECRET: ${{ SECRETS.WS1_OAUTH_CLIENT_SECRET }}
+          AUTOPKG_WS1_OAUTH_TOKEN_URL: ${{ SECRETS.WS1_OAUTH_TOKEN_URL }}
+          AUTOPKG_WS1_API_URL: ${{ SECRETS.WS1_API_URL }}
+          AUTOPKG_WS1_GROUPID: ${{ SECRETS.WS1_GROUPID }}
+          AUTOPKG_WS1_CONSOLE_URL: ${{ SECRETS.WS1_CONSOLE_URL }}
+
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: autopkg-run-artifacts
+        path: |
+          autopkg/cache/**/*receipt*
+          autopkg/reports/*
+          autopkg/logs/autopkg_runner.log
+          autopkg/logs/autopkg_assigner.log
+          autopkg/logs/autopkg_pruner.log

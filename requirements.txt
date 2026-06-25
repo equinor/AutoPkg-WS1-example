@@ -1,0 +1,4 @@
+# Made this file into a dummy due to issues with GitHub Advanced Security; two dependencies each cause GitHub Action
+# "Automatic Dependency Submission (Python)" to fail.
+
+# Therefore moved all contents from this file, and we actually use requirements_all.txt instead in autopkg.yml

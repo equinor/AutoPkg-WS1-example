@@ -1,0 +1,318 @@
+{
+    "Firefox.ws1.recipe.yaml": {
+        "timestamp": "2026-06-17 08:19:31.379955+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.Firefox/downloads/Mozilla Firefox.dmg",
+                "file_size": 134605568,
+                "etag": "\"346044ceb29beb73bdae0128f473e05b\"",
+                "last_modified": "Mon, 15 Jun 2026 13:57:25 GMT"
+            }
+        ]
+    },
+    "SuspiciousPackage.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:25:00.939820+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.SuspiciousPackage/downloads/SuspiciousPackage.dmg",
+                "file_size": 7016560,
+                "etag": "\"6b1070-64b1ca2565bc0\"",
+                "last_modified": "Wed, 18 Feb 2026 17:36:55 GMT"
+            }
+        ]
+    },
+    "CitrixWorkspace.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:25:26.595673+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.CitrixWorkspace/downloads/Install Citrix Workspace.pkg",
+                "file_size": 302969935,
+                "etag": "\"e33b52858fb2b1b71e40f5ed076fa790:1768844016.5608\"",
+                "last_modified": "Mon, 19 Jan 2026 17:34:35 GMT"
+            }
+        ]
+    },
+    "MicrosoftDefender.ws1.recipe.yaml": {
+        "timestamp": "2026-06-24 06:21:19.083332+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.MicrosoftDefender/downloads/Microsoft_Defender.pkg",
+                "file_size": 453708931,
+                "last_modified": "Tue, 23 Jun 2026 18:46:27 GMT"
+            }
+        ]
+    },
+    "LastPass-Safari.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:26:35.594997+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.LastPass-Safari/downloads/LastPass.dmg",
+                "file_size": 86044308,
+                "etag": "\"78750a4a980d4a6aff04c02a18ff772e\"",
+                "last_modified": "Tue, 06 Jun 2023 09:34:20 GMT"
+            }
+        ]
+    },
+    "iTerm2.ws1.recipe.yaml": {
+        "timestamp": "2026-06-10 11:09:24.572877+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.iTerm2/downloads/iTerm2-3_6_11.zip",
+                "file_size": 45124064,
+                "etag": "\"2b089e0-6534b808798a9\"",
+                "last_modified": "Tue, 02 Jun 2026 20:53:24 GMT"
+            }
+        ]
+    },
+    "JetBrainsToolbox-intel.ws1.recipe.yaml": {
+        "timestamp": "2026-04-18 11:39:40.287871+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.JetBrainsToolbox-intel/downloads/JetBrains Toolbox for Intel Macs-mac.dmg",
+                "file_size": 164449791,
+                "etag": "\"234da87a3182b6940e8264ac085ca9ed-20\"",
+                "last_modified": "Wed, 15 Apr 2026 15:34:31 GMT"
+            }
+        ]
+    },
+    "JetBrainsToolbox-arm64.ws1.recipe.yaml": {
+        "timestamp": "2026-04-18 11:40:09.506773+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.JetBrainsToolbox-arm64/downloads/JetBrains Toolbox for Apple Silicon Macs-macM1.dmg",
+                "file_size": 162327668,
+                "etag": "\"c6e158d2820fb5aada480bf8db313d2a-20\"",
+                "last_modified": "Wed, 15 Apr 2026 15:34:30 GMT"
+            }
+        ]
+    },
+    "MacAdminsPython.ws1.recipe.yaml": {
+        "timestamp": "2026-05-20 13:19:54.002779+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.MacAdminsPython/downloads/python_recommended_signed-3.14.5.80757.pkg",
+                "file_size": 61531138,
+                "etag": "\"0x8DEB5D8DCE26354\"",
+                "last_modified": "Tue, 19 May 2026 19:00:15 GMT"
+            }
+        ]
+    },
+    "DockerDesktopSilicon.ws1.recipe.yaml": {
+        "timestamp": "2026-05-20 13:21:11.909544+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.DockerDesktop-Silicon/downloads/Docker Desktop for Apple Silicon-arm64.dmg",
+                "file_size": 616277889,
+                "etag": "\"3812a7eecec22c87afe6925efd318881\"",
+                "last_modified": "Tue, 19 May 2026 09:45:04 GMT"
+            }
+        ]
+    },
+    "DockerDesktopIntel.ws1.recipe.yaml": {
+        "timestamp": "2026-05-20 13:27:57.491618+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.DockerDesktop-Intel/downloads/Docker Desktop for Intel-amd64.dmg",
+                "file_size": 659037118,
+                "etag": "\"983c1203c11564fc445771cea683cd05\"",
+                "last_modified": "Tue, 19 May 2026 09:45:38 GMT"
+            }
+        ]
+    },
+    "MicrosoftEdge.ws1.recipe.yaml": {
+        "timestamp": "2026-06-19 08:23:28.149470+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.MicrosoftEdge/downloads/MicrosoftEdge-149.0.4022.80.pkg",
+                "file_size": 412484993,
+                "etag": "\"isQuIkvQaveUnuddmpCGM7XXaqI=\"",
+                "last_modified": "Thu, 18 Jun 2026 18:13:20 GMT"
+            }
+        ]
+    },
+    "GPGSuite.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:33:44.930909+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.GPGSuite/downloads/GPG Suite.dmg",
+                "file_size": 48684152,
+                "etag": "\"2e6dc78-6011b8ed38a36\"",
+                "last_modified": "Sat, 22 Jul 2023 23:15:32 GMT"
+            }
+        ]
+    },
+    "GoogleChrome.ws1.recipe.yaml": {
+        "timestamp": "2026-06-24 05:53:47.436892+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.GoogleChrome/downloads/GoogleChrome.pkg",
+                "file_size": 247628050,
+                "etag": "\"64f0ab5\"",
+                "last_modified": "Tue, 23 Jun 2026 19:08:26 GMT"
+            }
+        ]
+    },
+    "GitHubDesktop.ws1.recipe.yaml": {
+        "timestamp": "2026-06-22 08:36:16.121797+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.GitHubDesktop/downloads/GitHubDesktop-darwin-arm64.zip",
+                "file_size": 182806766,
+                "etag": "\"0x8DEC0053C643013\"",
+                "last_modified": "Mon, 01 Jun 2026 17:43:05 GMT"
+            }
+        ]
+    },
+    "MicrosoftCompanyPortal.ws1.recipe.yaml": {
+        "timestamp": "2026-06-18 08:17:52.747958+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.CompanyPortal/downloads/Microsoft Company Portal.pkg",
+                "file_size": 82764801,
+                "last_modified": "Tue, 16 Jun 2026 23:29:15 GMT"
+            }
+        ]
+    },
+    "MicrosoftVisualStudioCode.ws1.recipe.yaml": {
+        "timestamp": "2026-06-25 07:56:22.553681+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.MicrosoftVisualStudioCode/downloads/Microsoft Visual Studio Code-universal.dmg",
+                "file_size": 381488370,
+                "etag": "\"0x8A0BAB88FB5C5D2EC8C7BFA1DAFCB2ABDB1EBBCFDA8325EE9A34D5F80E1E2839\"",
+                "last_modified": "Tue, 23 Jun 2026 10:30:07 GMT"
+            }
+        ]
+    },
+    "MunkiAdmin.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:38:54.096402+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.MunkiAdmin/downloads/MunkiAdmin-1.10.1.dmg",
+                "file_size": 4938388,
+                "etag": "\"0x8DE01B772E6C556\"",
+                "last_modified": "Thu, 02 Oct 2025 13:27:35 GMT"
+            }
+        ]
+    },
+    "LexmarkUniversalDriverColor.ws1.recipe.yaml": {
+        "timestamp": "2026-06-24 05:57:55.376604+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.LexmarkUniversalDriverColor/downloads/Lexmark Universal Printer Driver - Color.dmg",
+                "file_size": 19395481,
+                "etag": "\"9e0000ceb4b5906d93f3161b5b399680:1781805070.837686\"",
+                "last_modified": "Thu, 18 Jun 2026 17:51:12 GMT"
+            }
+        ]
+    },
+    "erase-install.ws1.recipe.yaml": {
+        "timestamp": "2026-04-29 09:25:24.585883+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.erase-install/downloads/erase-install-42.3.pkg",
+                "file_size": 31915999,
+                "etag": "\"0x8DEA16EAEFB82A3\"",
+                "last_modified": "Thu, 23 Apr 2026 19:29:48 GMT"
+            }
+        ]
+    },
+    "PaloAltoNetworksGlobalProtect.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:40:33.523423+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.PaloAltoNetworksGlobalProtect/downloads/Palo Alto Networks GlobalProtect.pkg",
+                "file_size": 120388080,
+                "etag": "\"68474e78-72cf9f0\"",
+                "last_modified": "Mon, 09 Jun 2025 21:13:28 GMT"
+            }
+        ]
+    },
+    "MicrosoftTeams.ws1.recipe.yaml": {
+        "timestamp": "2026-05-27 13:41:16.437807+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.MicrosoftTeams2/downloads/Microsoft Teams-26120.3106.4725.800.pkg",
+                "file_size": 333190838,
+                "last_modified": "Thu, 21 May 2026 09:30:22 GMT"
+            }
+        ]
+    },
+    "NodeJS-LTS.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:42:09.627990+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.NodeJS-LTS/downloads/node-v20.20.2.pkg",
+                "file_size": 73073007,
+                "etag": "\"3cea40fa8beea8409cefd3939fd9fe64\"",
+                "last_modified": "Tue, 24 Mar 2026 03:20:18 GMT"
+            }
+        ]
+    },
+    "Apparency.ws1.recipe.yaml": {
+        "timestamp": "2026-04-15 10:42:53.415115+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.Apparency/downloads/Apparency.dmg",
+                "file_size": 5624384,
+                "etag": "\"55d240-64cc2483408c0\"",
+                "last_modified": "Wed, 11 Mar 2026 16:39:39 GMT"
+            }
+        ]
+    },
+    "DockerDesktop-AppleSilicon.ws1.recipe.yaml": {
+        "timestamp": "2026-06-22 16:55:25.415427+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.DockerDesktop-Silicon/downloads/Docker Desktop for Apple Silicon-arm64.dmg",
+                "file_size": 587205793,
+                "etag": "\"b76dbbc1f071edd5ef12032d2cda9553\"",
+                "last_modified": "Mon, 22 Jun 2026 11:02:05 GMT"
+            }
+        ]
+    },
+    "DockerDesktop-Intel.ws1.recipe.yaml": {
+        "timestamp": "2026-06-22 17:01:59.273226+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.DockerDesktop-Intel/downloads/Docker Desktop for Intel-amd64.dmg",
+                "file_size": 652186537,
+                "etag": "\"f0d7d0b5820f3635f4723071d9c41922\"",
+                "last_modified": "Mon, 22 Jun 2026 11:02:59 GMT"
+            }
+        ]
+    },
+    "JetBrainsToolbox-Intel.ws1.recipe.yaml": {
+        "timestamp": "2026-06-10 11:15:17.915709+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.JetBrainsToolbox-intel/downloads/JetBrains Toolbox for Intel Macs-mac.dmg",
+                "file_size": 203584901,
+                "etag": "\"aa8306518754e94a424835033a9b0453-25\"",
+                "last_modified": "Tue, 02 Jun 2026 11:46:58 GMT"
+            }
+        ]
+    },
+    "JetBrainsToolbox-AppleSilicon.ws1.recipe.yaml": {
+        "timestamp": "2026-06-10 11:15:44.442884+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.JetBrainsToolbox-arm64/downloads/JetBrains Toolbox for Apple Silicon Macs-macM1.dmg",
+                "file_size": 167948078,
+                "etag": "\"f80d3d1616a5bfc368bff7c0058a5601-21\"",
+                "last_modified": "Tue, 02 Jun 2026 11:46:58 GMT"
+            }
+        ]
+    },
+    "GitHubCLI.ws1.recipe.yaml": {
+        "timestamp": "2026-06-22 10:29:37.382254+00:00",
+        "metadata": [
+            {
+                "file_path": "autopkg/cache/local.ws1.GitHubCLI/downloads/gh_2.95.0_macOS_arm64.zip",
+                "file_size": 13944744,
+                "etag": "\"0x8DECCAA52E853FB\"",
+                "last_modified": "Wed, 17 Jun 2026 19:55:04 GMT"
+            }
+        ]
+    }
+}

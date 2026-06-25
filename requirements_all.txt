@@ -1,0 +1,18 @@
+# Made the regular requirements.txt file into a dummy due to issues with GitHub Advanced Security; pyyaml and MacSesh
+# dependencies cause GitHub Action "Automatic Dependency Submission (Python)" to fail.
+# Therefore commented out all in the standard file, and we actually use requirements_all.txt instead in autopkg.yml
+
+
+# latest tested and known good
+urllib3==2.7.0
+
+# latest tested and known good
+requests==2.33.1
+
+# latest tested and known good
+requests-toolbelt==1.0.0
+
+# latest tested and known good
+# Causes issue with GHAS when placed in requirements.txt, therefore commented out, and we actually use requirements_all.txt instead in autopkg.yml
+# Details - causes GH Action "Automatic Dependency Submission (Python)" to fail
+pyyaml==6.0

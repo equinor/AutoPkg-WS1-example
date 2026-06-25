@@ -1,0 +1,53 @@
+name: Munki Repo branch merge
+# merge git branches older than interval set in script automatically and delete both local and remote
+
+permissions:
+  contents: read
+  # pull-requests: write
+
+on:
+  schedule:    # run on 15:00 UTC on Thursdays
+    - cron:  "45 15 * * 4"
+      timezone: "Europe/Oslo"
+  workflow_dispatch: # manually triggered
+    inputs:
+        auto-proceed:
+            description: process all eligible branches
+            required: false
+            default: 'False'
+            type: choice
+            options:
+                - 'False'
+                - 'True'
+
+jobs:
+  munki-repo-auto-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9   # if running more than 10 minutes, likely the runner runs out of storage space
+    env:
+        MUNKI_REPO_BRANCH_MERGER_AUTO_PROCEED: ${{ github.event.inputs.auto-proceed || 'True' }}   # set to 'True' if running cron schedule instead of workflow_dispatch
+
+    steps:
+    - name: Checkout repository content
+      uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 #v3.5.0 # Pin SHA1 hash instead of version
+
+    - name: Checkout your Munki LFS repo
+      # uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 #v3.0.2
+      uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 #v3.5.0 # Pin SHA1 hash instead of version
+      with:
+        repository: equinor/munki
+        # GitHub deploy key with read/write access to repo
+        ssh-key: ${{ secrets.CPE_MUNKI_LFS_DEPLOY_KEY }}
+        #fetch-depth: 1
+        # Need to fetch ALL branches and commits to be able to check existing imported titles, and avoid duplicate notifications
+        fetch-depth: 0
+        path: munki_repo
+
+    - name: Configure AutoPkg and Git
+      run: |
+        git config --global user.name "runner"
+        git config --global user.email "runner@githubactions.local"
+
+    - name: Run munki_repo_branch_merger.sh
+      run: |
+        "$GITHUB_WORKSPACE/munki_repo_branch_merger.sh"

@@ -1,0 +1,28 @@
+# Made the regular requirements.txt file into a dummy due to issues with GitHub Advanced Security; two dependencies
+# each cause GitHub Action "Automatic Dependency Submission (Python)" to fail.
+# Therefore commented out all in the other file, and we actually use either requirements_all.txt or
+# requirements_macsesh.txt instead in autopkg.yml
+
+
+# Need to keep urllib3 < 2 due to issues with MacSesh - see
+# https://github.com/sheagcraig/MacSesh/issues/7
+# https://github.com/sheagcraig/MacSesh/issues/9
+urllib3==1.26.20
+# Note that GitHub Advanced Security will generate both a couple of high severity alerts and a medium one for
+# vulnerabilities in this urllib3 version, which is why we've moved to using a REQUESTS_CA_BUNDLE in production
+# instead of MacSesh.
+
+# latest tested and known good
+requests==2.32.5
+
+# Latest tested and known good.
+# Causes issue with GHAS when placed in requirements.txt, therefore commented out and we actually use
+# requirements_all.txt instead in autopkg.yml
+# Details - causes GH Action "Automatic Dependency Submission (Python)" to fail
+macsesh==0.3.1
+
+# latest tested and known good
+# Causes issue with GHAS when placed in requirements.txt, therefore commented out and we actually use
+# requirements_all.txt instead in autopkg.yml
+# Details - causes GH Action "Automatic Dependency Submission (Python)" to fail
+pyyaml==6.0

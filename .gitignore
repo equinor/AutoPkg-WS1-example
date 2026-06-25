@@ -1,0 +1,8 @@
+.DS_Store
+/pull_request_body
+/pull_request_title
+/munki_repo/
+/EQUINOR-ca-bundle.pem
+/autopkg/cache/
+/autopkg/repos/
+/autopkg/reports/

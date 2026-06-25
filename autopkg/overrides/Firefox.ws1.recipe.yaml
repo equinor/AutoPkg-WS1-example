@@ -1,0 +1,41 @@
+Identifier: local.ws1.Firefox
+Input:
+  LOCALE: en-US
+  NAME: Mozilla Firefox
+  RELEASE: latest-esr
+  WS1_API_PASSWORD: none
+  WS1_API_TOKEN: none
+  WS1_API_URL: none
+  WS1_API_USERNAME: none
+  WS1_B64ENCODED_API_CREDENTIALS: none
+  WS1_CONSOLE_URL: none
+  WS1_GROUPID: none
+  WS1_OAUTH_CLIENT_ID: none
+  WS1_OAUTH_CLIENT_SECRET: none
+  WS1_OAUTH_TOKEN_URL: none
+  WS1_PUSH_MODE: none
+  WS1_SMART_GROUP_NAME: none
+ParentRecipe: com.github.codeskipper.ws1.MozillaFirefox
+ParentRecipeTrustInfo:
+  non_core_processors:
+    MozillaURLProvider:
+      git_hash: a28e56e90ebc52512a4b7ec8fe1981bf02e92bc5
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.recipes/Mozilla/MozillaURLProvider.py
+      sha256_hash: c4ce035b1a629c4925a80003899fcf39480e5224b3015613440f07ab96211f17
+    com.github.codeskipper.OMNISSA-WorkSpaceOneImporter/WorkSpaceOneImporter:
+      git_hash: f54e7feb6db9e3a359d657306886c3e0c087041a
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOneImporter.py
+      sha256_hash: e92456b74c91bd0031fd9115e18869b7e96130a0a557e776df5b55394a9508d4
+  parent_recipes:
+    com.github.autopkg.download.firefox-rc-en_US:
+      git_hash: 00f9b0ea8aa77716c0875f9aff6f1281cbf8d84d
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.recipes/Mozilla/Firefox.download.recipe
+      sha256_hash: 6d17ddeb226c88af7b4bdef7f981634f2da18403e0ebb86afeb5cfbdf4dc5237
+    com.github.autopkg.munki.firefox-rc-en_US:
+      git_hash: a501cf3dc4a6c72675b596dd2354602bd611fe3e
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.recipes/Mozilla/Firefox.munki.recipe
+      sha256_hash: 3a7cc5c6a4f3a538f1188261667b84e3358c5b00dacfbdbe9615df1a5b6bb715
+    com.github.codeskipper.ws1.MozillaFirefox:
+      git_hash: bfce9a6a0638d888f5c19e7303d58b08cc45e903
+      path: ~/<REDACTED>/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/Firefox.ws1.recipe.yaml
+      sha256_hash: a2798009daa691cd05a7d8c8bf5af30b671db4633ec17c968da1bb238f3d466e

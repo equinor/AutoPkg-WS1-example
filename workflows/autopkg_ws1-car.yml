@@ -1,0 +1,473 @@
+name: AutoPkg WS1-Importer (CAR library)
+
+# Runs the autopkg_tools_ws1_car.py driver, which uses cloud-autopkg-runner
+# (CAR) as a LIBRARY (not via its CLI) to run WorkSpaceOneImporter recipes in
+# parallel, then commits each new package to a per-version branch of the
+# separate Munki Git LFS repo via git worktrees.
+
+run-name: AutoPkg WS1 Importer script - CAR library version run
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+  # run after on 08:00 on Weekdays.
+  # Changed to not run at the whole hour to avoid delays due to busy GH server.
+  # Support for timezones is recently added in March 2026 but delays close to two hours are observed.  Hoping GH will address this soon, leaving as-is for now.
+    - cron: "37 08 * * 1-5"
+      timezone: "Europe/Oslo"
+  workflow_dispatch:
+    inputs:
+      recipe:
+        description: Optional recipe to run (e.g. Firefox.ws1.recipe.yaml)
+        required: false
+      autopkg_verbose:
+        description: AutoPkg verbosity level
+        required: true
+        default: '2'
+        type: choice
+        options: ['0', '1', '2', '3', '4']
+      autopkg_tools_verbose:
+        description: AutoPkg Tools (Git wrapper) verbosity level
+        required: true
+        default: '2'
+        type: choice
+        options: ['0', '1', '2', '3', '4']
+      max_concurrency:
+        description: Max parallel recipe workers
+        required: true
+        default: '4'
+        type: choice
+        options: ['1', '2', '4', '6', '8']
+      ws1_force_import:
+        description: Force import if version already on WS1 (replace so recipe may complete OK)
+        required: true
+        default: 'False'
+        type: choice
+        options: ['False', 'True']
+      recipe_timeout:
+        description: Recipe execution timeout in seconds (1200=20min, 900=15min, 1800=30min)
+        required: true
+        default: '1200'
+        type: string
+
+
+jobs:
+  AutoPkg:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      AUTOPKG_SHA256: "304f51506103b5daae44a977df9f53c0ee43f164813690b674b1d1437c833b03"
+      AUTOPKG_URL: "https://github.com/autopkg/autopkg/releases/download/v2.7.6/autopkg-2.7.6.pkg"
+      MUNKI_SHA256: "ba52389db369dd123297bfdf30daf37baba44bf967144382363b3b08ab5fab90"
+      MUNKI_URL: "https://github.com/munki/munki/releases/download/v5.6.3/munkitools-5.6.3.4401.pkg"
+    steps:
+
+
+    - name: Reclaim disk space from pre-installed software
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        echo "=== Disk space before cleanup ==="
+        df -h /
+        # Remove large pre-installed toolchains and frameworks we don't need
+        sudo rm -rf /usr/local/lib/android || true
+        sudo rm -rf /usr/share/dotnet || true
+        sudo rm -rf /Library/Frameworks/Mono.framework || true
+        sudo rm -rf /usr/local/share/powershell || true
+        sudo rm -rf /usr/local/lib/node_modules || true
+        sudo rm -rf /usr/local/share/chromium || true
+        sudo rm -rf /opt/homebrew/Caskroom || true
+        sudo rm -rf /usr/local/Caskroom || true
+        sudo rm -rf "${AGENT_TOOLSDIRECTORY}" || true
+        echo "=== Disk space after cleanup ==="
+        df -h /
+        # diff is about 7GB as of june 2026.
+
+
+    - name: Checkout repo
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0 # Pin SHA1 hash instead of version
+      with:
+        fetch-depth: 1
+
+
+    - name: Ensure metadata file exists
+      run: |
+        if [ ! -f metadata_cache.json ]; then
+          echo "{}" > metadata_cache.json
+        fi
+
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0 # Pin SHA1 hash instead of version
+      with:
+        version: "latest"
+        enable-cache: true
+
+
+    - name: Install Munki
+      run: |
+        if ! [[ -f /usr/local/munki/munkiimport ]]; then
+          curl -L ${{ env.MUNKI_URL }} --output /tmp/munkitools.pkg
+          echo "${{ env.MUNKI_SHA256 }} */tmp/munkitools.pkg" | shasum -c
+          if [[ $? != "0" ]]; then exit 1; fi
+          sudo installer -pkg /tmp/munkitools.pkg -target /
+        else
+          munki_release="$(/usr/local/munki/munkiimport --version)"
+          munki_release_needed="$(echo $MUNKI_URL | sed 's/.*munkitools-//; s/.pkg.*//')"
+          if ! [[ "$munki_release" == "$munki_release_needed" ]]; then
+            echo "Installed Munki version $munki_release does not match needed version $munki_release_needed - aborting"
+            exit 1
+          fi
+        fi
+        echo "ensured Munki release $munki_release is in place"
+
+
+    - name: Install AutoPkg
+      run: |
+        install_autopkg=false
+        if [[ ! -f /usr/local/bin/autopkg ]]; then
+          install_autopkg=true
+        else
+          autopkg_release="$(/usr/local/bin/autopkg version)"
+          autopkg_release_needed="$(echo $AUTOPKG_URL | sed 's/.*autopkg-//; s/.pkg.*//')"
+          if ! [[ "$autopkg_release" == "$autopkg_release_needed" ]]; then
+            install_autopkg=true
+          fi
+        fi
+        if $install_autopkg; then
+          curl -L ${{ env.AUTOPKG_URL }} --output /tmp/autopkg.pkg
+          echo "${{ env.AUTOPKG_SHA256 }} */tmp/autopkg.pkg" | shasum -c
+          if [[ $? != "0" ]]; then
+            echo "Checksum of downloaded package did not match - aborting"
+            exit 1;
+          fi
+          sudo installer -pkg /tmp/autopkg.pkg -target /
+          if [[ $? != "0" ]]; then
+            echo "AutoPkg install failed - aborting"
+            exit 1;
+          fi
+        fi
+        autopkg_release="$(/usr/local/bin/autopkg version)"
+        echo "ensured AutoPkg release $autopkg_release is in place"
+
+
+    - name: Upgrade AutoPkg Python PIP
+      run: |
+        sudo -H --preserve-env=http_proxy,https_proxy,PIP_CERT /Library/AutoPkg/Python3/Python.framework/Versions/Current/bin/python3 -m pip install --upgrade pip
+
+
+    - name: Install AutoPkg Python dependencies for custom processor WorkspaceOneImporter
+      run: |
+        sudo -H --preserve-env=http_proxy,https_proxy,PIP_CERT /Library/AutoPkg/Python3/Python.framework/Versions/Current/bin/pip3 install -r requirements_all.txt
+
+
+    - name: Install CAR (cloud-autopkg-runner) and project deps via uv
+      run: |
+        uv sync
+
+
+    - name: Record free space before Munki LFS checkout
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        df -k / | tail -1 | awk '{print $4}' > /tmp/disk_before_munki_checkout.txt
+
+    - name: Checkout your Munki LFS repo
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0 # Pin SHA1 hash instead of version
+      with:
+        repository: equinor/munki
+        ssh-key: ${{ secrets.CPE_MUNKI_LFS_DEPLOY_KEY }}
+        # Do we really?  Need full history so the worktree-based push can branch off origin/main.
+        # Testing fetch-depth: 1     # shallow — saves disk & time
+        fetch-depth: 1
+        path: munki_repo
+        lfs: false          # ← Do NOT download full size LFS objects during checkout
+
+
+    - name: Configure LFS skip-smudge (prevent git worktree checkouts from pulling full size LFS files)
+      working-directory: munki_repo
+      run: |
+        git lfs install --skip-smudge --local
+        # Optionally pull only small metadata if makecatalogs needs real file hashes:
+        # git lfs pull -I "icons/**"
+
+
+    - name: Disk delta after Munki LFS checkout
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        before=$(cat /tmp/disk_before_munki_checkout.txt)
+        after=$(df -k / | tail -1 | awk '{print $4}')
+        consumed=$(( (before - after) / 1024 ))
+        echo "=== Munki LFS checkout consumed: ${consumed} MB ==="
+        echo "Free before: $(( before / 1024 )) MB | Free after: $(( after / 1024 )) MB"
+        du -sh munki_repo/ munki_repo/.git/
+
+
+    - name: Check free space
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        df -h .
+
+    - name: Configure AutoPkg and Git
+      run: |
+        AUTOPKG_DIR="${GITHUB_WORKSPACE}/autopkg"
+        MUNKI_DIR="${GITHUB_WORKSPACE}/munki_repo"
+        defaults write com.github.autopkg CACHE_DIR "${AUTOPKG_DIR}/cache"
+        defaults write com.github.autopkg RECIPE_OVERRIDE_DIRS "${AUTOPKG_DIR}/overrides"
+        defaults write com.github.autopkg RECIPE_REPO_DIR "${AUTOPKG_DIR}/repos"
+        defaults write com.github.autopkg FAIL_RECIPES_WITHOUT_TRUST_INFO -bool YES
+        defaults write com.github.autopkg MUNKI_REPO "${MUNKI_DIR}"
+
+        # GITHUB_TOKEN is included in AutoPkg prefs for now, because it is needed for GitHubReleasesInfoProvider
+        defaults write com.github.autopkg GITHUB_TOKEN "${{ secrets.GITHUB_TOKEN }}"
+
+        git config --global user.name "runner"
+        git config --global user.email "runner@githubactions.local"
+
+    - name: Record free space before AutoPkg repo-add
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        df -k / | tail -1 | awk '{print $4}' > /tmp/disk_before_repo_add.txt
+
+    - name: Add AutoPkg repos
+      run: |
+        cat "autopkg/repo_list.txt" | xargs autopkg repo-add
+
+    - name: Disk delta after AutoPkg repo-add
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        before=$(cat /tmp/disk_before_repo_add.txt)
+        after=$(df -k / | tail -1 | awk '{print $4}')
+        consumed=$(( (before - after) / 1024 ))
+        echo "=== AutoPkg repo-add consumed: ${consumed} MB ==="
+        echo "Free before: $(( before / 1024 )) MB | Free after: $(( after / 1024 )) MB"
+        du -sh autopkg/repos/ 2>/dev/null
+
+
+#    - name: git checkout WorkSpaceOneImporter-recipes DEV branch
+#      run: |
+#        cd autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes
+#        git checkout dev
+#        cd "$GITHUB_WORKSPACE"
+
+
+    - name: Record free space before makecatalogs
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        df -k / | tail -1 | awk '{print $4}' > /tmp/disk_before_makecatalogs.txt
+
+    - name: Run makecatalogs
+      run: |
+        /usr/local/munki/makecatalogs munki_repo
+
+    - name: Disk delta after makecatalogs
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        before=$(cat /tmp/disk_before_makecatalogs.txt)
+        after=$(df -k / | tail -1 | awk '{print $4}')
+        consumed=$(( (before - after) / 1024 ))
+        echo "=== makecatalogs consumed: ${consumed} MB ==="
+        echo "Free before: $(( before / 1024 )) MB | Free after: $(( after / 1024 )) MB"
+
+
+    - name: Conditional environment variables for AutoPkg
+      # passing conditional settings for AutoPkg WS1 features as environment variables directly for AutoPkg instead of
+      # as CLI arguments. This simplifies things and improves consistency across launcher script for local testing.
+
+      # Note that these AutoPkg input variables passed as environment variables are case-sensitive, and we can't use
+      # the normal all-caps style.
+      # MUST name 'AUTOPKG_' in all-capitals and use same capitalisation for the remainder for the key name.
+      # So for instance AUTOPKG_ws1_app_versions_to_keep_default works as expected, and
+      # neither AUTOPKG_WS1_APP_VERSIONS_TO_KEEP_DEFAULT nor autopkg_ws1_app_versions_to_keep_default works.
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "We are running the workflow as a manual dispatch, so using dispatch input values"
+          echo "AUTOPKG_verbose=$DISPATCH_AUTOPKG_VERBOSE"  >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_VERBOSE=$DISPATCH_AUTOPKG_TOOLS_VERBOSE"  >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_MAX_CONCURRENCY=$DISPATCH_MAX_CONCURRENCY"  >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_RECIPE_TIMEOUT=$DISPATCH_RECIPE_TIMEOUT" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_force_import=$DISPATCH_WS1_FORCE_IMPORT" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_update_assignments=$DISPATCH_WS1_UPDATE_ASSIGNMENTS" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_app_versions_prune=$DISPATCH_WS1_APP_VERSIONS_PRUNE" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_app_versions_to_keep_default=$DISPATCH_WS1_APP_VERSIONS_TO_KEEP_DEFAULT" >> $GITHUB_ENV
+        else
+          echo "We are running the workflow with an automatic trigger (schedule), so using hardcoded default values"
+          echo "AUTOPKG_verbose=1" >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_VERBOSE=1" >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_MAX_CONCURRENCY=4" >> $GITHUB_ENV
+          echo "AUTOPKG_TOOLS_RECIPE_TIMEOUT=1200" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_force_import=False" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_update_assignments=True" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_app_versions_prune=True" >> $GITHUB_ENV
+          echo "AUTOPKG_ws1_app_versions_to_keep_default=5" >> $GITHUB_ENV
+        fi
+
+        # Passing default for ws1_import_new_only as env var as well, even though it isn't needed anymore to set as
+        # dispatch value, must be set to False because we need to process assignments as well.
+        echo "AUTOPKG_ws1_import_new_only=False" >> $GITHUB_ENV
+      env:
+          DISPATCH_AUTOPKG_VERBOSE: ${{ github.event.inputs.autopkg_verbose }}
+          DISPATCH_AUTOPKG_TOOLS_VERBOSE: ${{ github.event.inputs.autopkg_tools_verbose }}
+          DISPATCH_MAX_CONCURRENCY: ${{ github.event.inputs.max_concurrency }}
+          DISPATCH_WS1_FORCE_IMPORT: ${{ github.event.inputs.ws1_force_import }}
+          DISPATCH_RECIPE_TIMEOUT: ${{ github.event.inputs.recipe_timeout }}
+          DISPATCH_WS1_UPDATE_ASSIGNMENTS: ${{ github.event.inputs.ws1_update_assignments }}
+          DISPATCH_WS1_APP_VERSIONS_PRUNE: ${{ github.event.inputs.ws1_app_versions_prune }}
+          DISPATCH_WS1_APP_VERSIONS_TO_KEEP_DEFAULT: ${{ github.event.inputs.ws1_app_versions_to_keep_default }}
+
+    - name: Export AutoPkg preferences for cloud-autopkg-runner (CAR)
+      run: |
+        # This ensures the defaults preferences are written out to to file before calling CAR, which is needed because
+        # CAR does not use macOS native defaults settings.
+        # When defaults are not passed as expected to CAR, this is known to lead to sporadic
+        # errors "Could not find parent recipe..."
+        # We will use the exported binary plist file as an argument to CAR in autopkg_tools_ws1_cloud_cli.py
+        defaults export com.github.autopkg "${GITHUB_WORKSPACE}/autopkg/autopkg_prefs.plist"
+        echo "These are the AutoPkg preferences for CAR/AutoPkg:"
+        autopkg info --prefs=autopkg/autopkg_prefs.plist
+
+    - name: Record free space before CAR library run
+      if: fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        df -k / | tail -1 | awk '{print $4}' > /tmp/disk_before_car_run.txt
+
+    - name: Run AutoPkg Tools - CAR (library) version
+      run: |
+        # assure these folders exist
+        mkdir -p autopkg/logs autopkg/reports
+
+        # run using uv, with CAR library shipped with AutoPkg
+        uv run python autopkg_tools_ws1_car.py -l autopkg/recipe_list.json
+        if [ -f pull_request_title ]; then
+          echo "TITLE=$(cat pull_request_title)" >> $GITHUB_ENV
+          echo "BODY<<EOF" >> $GITHUB_ENV
+          cat pull_request_body >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        fi
+      env:
+        RECIPE_TO_RUN: ${{ github.event.inputs.recipe }}
+        AUTOPKG_SLACK_WEBHOOK_TOKEN: ${{ secrets.SLACK_WEBHOOK_URL }}
+        AUTOPKG_ws1_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        AUTOPKG_WS1_OAUTH_CLIENT_ID: ${{ SECRETS.WS1_OAUTH_CLIENT_ID }}
+        AUTOPKG_WS1_OAUTH_CLIENT_SECRET: ${{ SECRETS.WS1_OAUTH_CLIENT_SECRET }}
+        AUTOPKG_WS1_OAUTH_TOKEN_URL: ${{ SECRETS.WS1_OAUTH_TOKEN_URL }}
+        AUTOPKG_WS1_API_URL: ${{ SECRETS.WS1_API_URL }}
+        AUTOPKG_WS1_CONSOLE_URL: ${{ SECRETS.WS1_CONSOLE_URL }}
+        AUTOPKG_WS1_GROUPID: ${{ SECRETS.WS1_GROUPID }}
+        CURL_CA_BUNDLE: CA-certificates/cacerts-2025-12-02-plus-Equinor-CA-bundle.pem
+        REQUESTS_CA_BUNDLE: CA-certificates/cacerts-2025-12-02-plus-Equinor-CA-bundle.pem
+
+    - name: Disk delta after CAR library run
+      if: always() && fromJSON(env.AUTOPKG_TOOLS_VERBOSE || '2') >= 4
+      run: |
+        before=$(cat /tmp/disk_before_car_run.txt 2>/dev/null || echo 0)
+        after=$(df -k / | tail -1 | awk '{print $4}')
+        consumed=$(( (before - after) / 1024 ))
+        echo "=== CAR library run consumed: ${consumed} MB ==="
+        echo "Free before: $(( before / 1024 )) MB | Free after: $(( after / 1024 )) MB"
+        echo ""
+        echo "--- Breakdown of space consumers ---"
+        echo "autopkg/cache:"
+        du -sh autopkg/cache/ 2>/dev/null
+        du -sh autopkg/cache/*/ 2>/dev/null | sort -rh | head -10
+        echo "munki_repo:"
+        du -sh munki_repo/ munki_repo/.git/ 2>/dev/null
+        echo "munki_repo_worktrees:"
+        du -sh munki_repo_worktrees/ 2>/dev/null || echo "(not present)"
+
+    - name: Upload per-recipe logs and reports as artifacts
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: autopkg-car-logs-and-reports
+        path: |
+          autopkg/logs/**
+          autopkg/reports/**
+          metadata_cache.json
+
+
+    - name: Post-run disk space diagnostics
+      if: always() && fromJSON(env.AUTOPKG_TOOLS_VERBOSE) >= 4
+      run: |
+        echo "=== Overall disk usage ==="
+        df -h /
+        echo ""
+        echo "=== Top-level directory sizes ==="
+        du -sh "$GITHUB_WORKSPACE"/* 2>/dev/null | sort -rh | head -20
+        echo ""
+        echo "=== Munki repo breakdown ==="
+        if [ -d munki_repo ]; then
+          du -sh munki_repo/ munki_repo/.git/ 2>/dev/null
+          echo "  pkgs:"
+          du -sh munki_repo/pkgs/ 2>/dev/null
+          echo "  pkgsinfo:"
+          du -sh munki_repo/pkgsinfo/ 2>/dev/null
+        fi
+        echo ""
+        echo "=== Worktrees directory ==="
+        if [ -d munki_repo_worktrees ]; then
+          du -sh munki_repo_worktrees/ 2>/dev/null
+          ls -la munki_repo_worktrees/ 2>/dev/null
+        else
+          echo "(not created)"
+        fi
+        echo ""
+        echo "=== AutoPkg cache breakdown ==="
+        if [ -d autopkg/cache ]; then
+          du -sh autopkg/cache/ 2>/dev/null
+          du -sh autopkg/cache/*/ 2>/dev/null | sort -rh | head -10
+        fi
+        echo ""
+        echo "=== AutoPkg repos ==="
+        if [ -d autopkg/repos ]; then
+          du -sh autopkg/repos/ 2>/dev/null
+        fi
+        echo ""
+        echo "=== Largest files on disk (>100M) ==="
+        find "$GITHUB_WORKSPACE" -type f -size +100M -exec du -sh {} \; 2>/dev/null | sort -rh | head -20
+
+
+    - name: Commit updated metadata
+      run: |
+        git add metadata_cache.json
+        if git diff --cached --quiet; then
+          echo "No metadata changes detected in file."
+        else
+          echo "metadata file changes detected, committing to repo."
+          git commit -m "Update metadata_cache.json"
+          git push
+        fi
+
+
+    - name: Create Trust Info pull request
+      if: env.TITLE
+      run: |
+        export BRANCH_NAME=trust-info-`date +'%Y-%m-%d'`
+        git checkout -b $BRANCH_NAME
+        git add autopkg/overrides/
+        git commit -m "${{ env.TITLE }}"
+        git push --set-upstream origin $BRANCH_NAME
+        export JQPATH="$(which jq)"
+        if [[ "$JQPATH" == "" ]]; then
+          if [[ -d "/opt/homebrew/bin" ]]; then
+            export HOMEBREW_PATH="/opt/homebrew/bin"
+          elif [[ -d "/usr/local/bin" ]]; then
+            export HOMEBREW_PATH="/usr/local/bin"
+          else
+            echo "Homebrew not installed - aborting"; exit 1
+          fi
+          if ! [[ -f "$HOMEBREW_PATH/jq" ]]; then
+            echo "jq not found in $HOMEBREW_PATH/jq - aborting"; exit 1
+          fi
+          export JQPATH="$HOMEBREW_PATH/jq"
+        fi
+        $JQPATH -n --arg title "${{ env.TITLE }}" \
+              --arg body "$BODY" \
+              --arg head "$BRANCH_NAME" \
+           '{title: $title, body: $body, head: $head, "base": "${{ github.ref }}"}' | curl -s --request POST \
+           --url https://api.github.com/repos/${{ github.repository }}/pulls \
+           --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+           --header 'content-type: application/json' \
+           -d@-
+

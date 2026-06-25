@@ -1,0 +1,6 @@
+{
+	"CACHE_DIR": "autopkg/cache",
+	"FAIL_RECIPES_WITHOUT_TRUST_INFO": "True",
+	"RECIPE_REPO_DIR": "autopkg/repos",
+	"RECIPE_OVERRIDE_DIRS": "autopkg/overrides"
+}

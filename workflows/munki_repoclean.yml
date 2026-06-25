@@ -1,0 +1,93 @@
+name: Munki Repoclean
+# Scheduled job to prune the Munki repo for old software versions
+# Number of versions to keep is hardcoded to 10 at his point out of abundance of caution.
+# Long term goal: bring the number of versions to keep down going forward to cut down on space usage
+
+run-name: Munki GitHub repository cleanup run
+
+permissions:
+  contents: read
+  # pull-requests: write
+
+on:
+  schedule:  # run on 15:00 UTC on Mondays
+    - cron:  "30 15 * * 1"
+      timezone: "Europe/Oslo"
+  workflow_dispatch: # manually triggered
+    inputs:
+      show_all:
+        description: Show all munki repo items, even those not to be deleted
+        required: False
+        default: 'True'
+        type: choice
+        options:
+          - 'False'
+          - 'True'
+
+jobs:
+  repoclean:
+    # runs-on: ubuntu-latest
+    # moving from ubuntu-latest to macos-latest due to an error about dependency on PyObjc module Foundation
+    # ModuleNotFoundError: No module named 'Foundation' in munki/code/client/munkilib/prefs.py
+    # Therefore installing Munki instead of checking out Munki code
+    runs-on: macos-latest
+    timeout-minutes: 15
+    env:
+      MUNKI_SHA256: "ba52389db369dd123297bfdf30daf37baba44bf967144382363b3b08ab5fab90"
+      MUNKI_URL: "https://github.com/munki/munki/releases/download/v5.6.3/munkitools-5.6.3.4401.pkg"
+
+      show_all: ${{ github.events.inputs.show_all || 'True' }}
+
+    steps:
+    - name: Install Munki
+      run: |
+        if ! [[  -f /usr/local/munki/munkiimport ]]; then
+          curl -L ${{ env.MUNKI_URL }} --output /tmp/munkitools.pkg
+          echo "${{ env.MUNKI_SHA256 }} */tmp/munkitools.pkg" | shasum -c
+          if [[ $? != "0" ]]; then exit 1; fi
+          sudo installer -pkg /tmp/munkitools.pkg -target /
+        else
+          munki_release="$(/usr/local/munki/munkiimport --version)"
+          munki_release_needed="$(echo $MUNKI_URL | sed 's/.*munkitools-//; s/.pkg.*//')"
+          if ! [[ "$munki_release" == "$munki_release_needed" ]]; then
+            echo "Installed Munki version $munki_release does not match needed version $munki_release_needed - aborting"
+            exit 1
+          fi
+        fi
+        echo "ensured Munki release $munki_release is in place"
+
+
+    - name: Checkout your munki LFS repo
+      # uses: actions/checkout@28c7f3d2b5162b5ddd3dfd9a45aa55eaf396478b
+      uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 #v3.5.0 # Pin SHA1 hash instead of version
+      with:
+        fetch-depth: 1
+        repository: equinor/munki
+        ref: refs/heads/main
+        path: munki_repo
+        # GitHub deploy key with read/write access to repo
+        ssh-key: ${{ secrets.CPE_MUNKI_LFS_DEPLOY_KEY }}
+
+    - name: Run Munki repoclean
+      run: |
+        if [[ "$show_all" = "True" ]]; then
+          /usr/local/munki/munki-python /usr/local/munki/repoclean --show-all --auto --keep=10 munki_repo
+        else
+          /usr/local/munki/munki-python /usr/local/munki/repoclean --auto --keep=10 munki_repo
+        fi
+
+    - name: Push changes
+      run: |
+        cd munki_repo/
+        git config --global user.name "runner"
+        git config --global user.email "runner@githubactions.local"
+        git checkout -b "repoclean-`date +'%Y-%m-%d'`"
+        git add -u pkgsinfo/ pkgs/
+        # if ! git diff --exit-code ; then  # commenting out as fix, this condition does NOT test for staged deleted files
+        if git diff --cached --name-only --diff-filter=D | grep -q .; then
+          echo "There are staged deleted files"
+          git commit -m "`date +'%Y-%m-%d'` repoclean"
+          git push --set-upstream origin "repoclean-`date +'%Y-%m-%d'`"
+        else
+          echo "No staged deletions to commit"
+        fi
