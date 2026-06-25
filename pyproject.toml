@@ -5,7 +5,7 @@ requires-python = ">=3.10"
 dependencies = [
     "cloud-autopkg-runner>=0.25.1",
 	"urllib3==2.7.0",
-	"requests==2.33.1",
+	"requests==2.33.0",
 	"requests-toolbelt==1.0.0",
 	"pyyaml==6.0.2",
 ]
