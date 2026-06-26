@@ -15,6 +15,8 @@ Input:
   WS1_OAUTH_CLIENT_ID: none
   WS1_OAUTH_CLIENT_SECRET: none
   WS1_OAUTH_TOKEN_URL: none
+  WS1_PUSH_MODE: none
+  WS1_SMART_GROUP_NAME: none
   ws1_app_assignments:
   - distribution:
       app_delivery_method: ON_DEMAND
