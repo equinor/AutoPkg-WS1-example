@@ -1,0 +1,45 @@
+Identifier: local.ws1.PaloAltoNetworksGlobalProtect
+Input:
+  DISPLAY_NAME: Palo Alto Networks GlobalProtect
+  DOWNLOAD_URL: https://%HOSTNAME%/global-protect/getmsi.esp?platform=%PLATFORM%
+  HOSTNAME: <REDACTED>.<REDACTED>.com
+  MUNKI_CATEGORY: IT
+  MUNKI_REPO_SUBDIR: apps/Palo Alto Networks
+  NAME: Palo Alto Networks GlobalProtect
+  PLATFORM: mac
+  WS1_API_PASSWORD: none
+  WS1_API_TOKEN: none
+  WS1_API_URL: none
+  WS1_API_USERNAME: none
+  WS1_B64ENCODED_API_CREDENTIALS: none
+  WS1_CONSOLE_URL: none
+  WS1_GROUPID: none
+  WS1_OAUTH_CLIENT_ID: none
+  WS1_OAUTH_CLIENT_SECRET: none
+  WS1_OAUTH_TOKEN_URL: none
+  WS1_PUSH_MODE: none
+  WS1_SMART_GROUP_NAME: none
+ParentRecipe: com.github.codeskipper.PaloAltoNetworksGlobalProtect.ws1.recipe.yaml
+ParentRecipeTrustInfo:
+  non_core_processors:
+    com.github.codeskipper.OMNISSA-WorkSpaceOneImporter/WorkSpaceOneImporter:
+      git_hash: f54e7feb6db9e3a359d657306886c3e0c087041a
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOneImporter.py
+      sha256_hash: e92456b74c91bd0031fd9115e18869b7e96130a0a557e776df5b55394a9508d4
+    com.github.homebysix.FindAndReplace/FindAndReplace:
+      git_hash: cecb7b4f782a8f6b59f029d30a544df0e07c5548
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.homebysix-recipes/FindAndReplace/FindAndReplace.py
+      sha256_hash: 550c9015d45d5f4bbdef4ebd2563c4fbfcbef10cde59598bb101ef7b2647a310
+  parent_recipes:
+    com.github.codeskipper.PaloAltoNetworksGlobalProtect.ws1.recipe.yaml:
+      git_hash: 5a3a6d78444efaa2021f2f1d99c20081ace5f49b
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/PaloAltoNetworksGlobalProtect.ws1.recipe.yaml
+      sha256_hash: 9673c14261858383f079dcd6440c7ab98d185c90c3c56735bbc03259ae999684
+    com.github.codeskipper.munki.PaloAltoNetworksGlobalProtect:
+      git_hash: b135cc3d2dab05f086b066344597505dbfe62617
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-parent-recipes/PaloAltoNetworksGlobalProtect.munki.recipe.yaml
+      sha256_hash: 2864d06c76a38256114397345cdc46958e5d0682dc44b331c7e904495c7781cc
+    com.github.peshay.download.GlobalProtect:
+      git_hash: 1413b0c093425a44d1d42ace1c60232b0578e31d
+      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.peshay-recipes/PaloAlto/GlobalProtect.download.recipe
+      sha256_hash: 24e02b16b18bac1e94c65e0ed8ea09f56f3f971bb9178036d137aa6c2f0c94d9
