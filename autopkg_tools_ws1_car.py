@@ -25,6 +25,7 @@ import json
 import logging
 import os
 import plistlib
+import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +45,7 @@ from cloud_autopkg_runner import (
     logging_config,
 )
 from cloud_autopkg_runner.logging_context import recipe_context
+from cloud_autopkg_runner.shell import run_cmd
 
 # ---------------------------------------------------------------------------
 # Constants / environment
@@ -116,6 +118,55 @@ def _normalise_cache_paths(cache_file: Path) -> None:
             encoding="utf-8",
         )
         logger.info(f"Normalised absolute paths in {cache_file.name} to relative")
+
+
+# we need the AutoPkg RECIPE_REPO_DIR setting value to provide links to parent recipe upstream commits that cause
+# trust info failure events. Hardcoding here for the time being while we see how the new feature works out in practice.
+AUTOPKG_RECIPE_REPO_DIR = GITHUB_WORKSPACE / "autopkg" / "repos"
+
+
+def _get_remote_url(repo_path: Path) -> str | None:
+    """Read the origin remote URL from a local git repo."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "remote", "get-url", "origin"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        url = result.stdout.strip()
+        # Normalise SSH URLs to HTTPS for clickable links
+        if url.startswith("git@github.com:"):
+            url = "https://github.com/" + url.removeprefix("git@github.com:")
+        return url.removesuffix(".git")
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def _extract_commit_links(trust_output: str) -> list[str]:
+    """Parse trust-info -vvv output for commit hashes and build GitHub links."""
+    links: list[str] = []
+    current_repo_path: Path | None = None
+
+    for line in trust_output.splitlines():
+        path_match = re.match(r"\s+Path:\s+(.+)", line)
+        if path_match:
+            full_path = Path(path_match.group(1)).resolve()
+            try:
+                rel = full_path.relative_to(AUTOPKG_RECIPE_REPO_DIR.resolve())
+                repo_dir_name = rel.parts[0]
+                current_repo_path = AUTOPKG_RECIPE_REPO_DIR / repo_dir_name
+            except (ValueError, IndexError):
+                current_repo_path = None
+
+        commit_match = re.match(r"\s*commit ([0-9a-f]{40})", line)
+        if commit_match and current_repo_path:
+            sha = commit_match.group(1)
+            remote_url = _get_remote_url(current_repo_path)
+            if remote_url:
+                links.append(f"{remote_url}/commit/{sha}")
+
+    return links
 
 
 def _verbose_to_settings_level(v: int) -> int:
@@ -481,20 +532,46 @@ async def _process_recipe(
         if not opts.disable_verification:
             trusted = await recipe.verify_trust_info()
             if not trusted:
-                trust_out = await recipe.get_trust_output()
+                # Re-run verify-trust-info at -vvv to capture full verbose diff
+                # (CAR library uses the general verbosity level which may be lower)
+                trust_cmd = [
+                    "/usr/local/bin/autopkg",
+                    "verify-trust-info",
+                    name,
+                    f"--override-dir={path.parent}",
+                    f"--prefs={PREFS_FILE}",
+                    "-vvv",
+                ]
+                _rc, _stdout, trust_out = await run_cmd(trust_cmd, check=False)
                 logger.warning("Trust verification FAILED for %s", name)
                 if not opts.no_trust_pr:
                     try:
                         await recipe.update_trust_info()
                     except Exception:  # noqa: BLE001
                         logger.exception("update_trust_info failed for %s", name)
-                trust_failures.append((name, trust_out or ""))
+                commit_links = _extract_commit_links(trust_out or "")
+                trust_out_with_links = trust_out or ""
+                if commit_links:
+                    links_section = "\n".join(f"• {link}" for link in commit_links)
+                    trust_out_with_links += f"\n\nUpstream commit(s):\n{links_section}"
+                trust_failures.append((name, trust_out_with_links))
+                # Slack gets a concise message with commit links only (verbose
+                # output goes to the PR body instead).
+                if commit_links:
+                    slack_msg = "Upstream commit(s):\n" + "\n".join(
+                        f"• {link}" for link in commit_links
+                    )
+                else:
+                    slack_msg = (
+                        "Trust verification failed "
+                        "(no upstream commit links available)."
+                    )
                 _slack_for_recipe(
                     name,
                     None,
                     None,
                     None,
-                    (trust_out or "")[:1500],
+                    slack_msg,
                     suppress_non_trust_failures,
                 )
                 return
