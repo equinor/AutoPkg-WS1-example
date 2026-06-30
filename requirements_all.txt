@@ -7,7 +7,7 @@
 urllib3==2.7.0
 
 # latest tested and known good
-requests==2.33.1
+requests==2.33.0
 
 # latest tested and known good
 requests-toolbelt==1.0.0
