@@ -444,10 +444,11 @@ jobs:
       if: env.TITLE
       run: |
         export BRANCH_NAME=trust-info-`date +'%Y-%m-%d'`
-        git checkout -b $BRANCH_NAME
+        git fetch origin $BRANCH_NAME 2>/dev/null || true  # Fetch existing branch if it exists
+        git checkout -b $BRANCH_NAME 2>/dev/null || git checkout $BRANCH_NAME  # Create or switch to branch
         git add autopkg/overrides/
-        git commit -m "${{ env.TITLE }}"
-        git push --set-upstream origin $BRANCH_NAME
+        git commit -m "${{ env.TITLE }}" || true  # Allow no changes to commit
+        git push --force-with-lease --set-upstream origin $BRANCH_NAME  # Force push with safety check
         export JQPATH="$(which jq)"
         if [[ "$JQPATH" == "" ]]; then
           if [[ -d "/opt/homebrew/bin" ]]; then
@@ -465,9 +466,50 @@ jobs:
         $JQPATH -n --arg title "${{ env.TITLE }}" \
               --arg body "$BODY" \
               --arg head "$BRANCH_NAME" \
-           '{title: $title, body: $body, head: $head, "base": "${{ github.ref }}"}' | curl -s --request POST \
-           --url https://api.github.com/repos/${{ github.repository }}/pulls \
-           --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-           --header 'content-type: application/json' \
-           -d@-
+           '{title: $title, body: $body, head: $head, "base": "${{ github.ref }}"}' > /tmp/pr_payload.json
 
+        # Check if a PR already exists for this branch
+        EXISTING_PR=$( curl -s \
+           --url "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${BRANCH_NAME}&state=open" \
+           --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+           | $JQPATH '.[0].number // empty' )
+
+        if [ -n "$EXISTING_PR" ]; then
+          echo "Updating existing PR #${EXISTING_PR} with new trust info body"
+          curl -s --request PATCH \
+             --url "https://api.github.com/repos/${{ github.repository }}/pulls/${EXISTING_PR}" \
+             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+             --header 'content-type: application/json' \
+             -d@/tmp/pr_payload.json
+          echo "TRUST_PR_URL=https://github.com/${{ github.repository }}/pull/${EXISTING_PR}" >> $GITHUB_ENV
+        else
+          echo "Creating new trust info PR"
+          PR_RESPONSE=$(curl -s --request POST \
+             --url https://api.github.com/repos/${{ github.repository }}/pulls \
+             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+             --header 'content-type: application/json' \
+             -d@/tmp/pr_payload.json)
+          echo "$PR_RESPONSE"
+          PR_URL=$(echo "$PR_RESPONSE" | $JQPATH -r '.html_url // empty')
+          echo "TRUST_PR_URL=${PR_URL}" >> $GITHUB_ENV
+        fi
+
+    - name: Slack notification for Trust Info PR
+      if: env.TRUST_PR_URL
+      run: |
+        curl -s --request POST \
+          --url "${{ secrets.SLACK_WEBHOOK_URL }}" \
+          --header 'Content-Type: application/json' \
+          --data "$(cat <<EOF
+        {
+          "attachments": [{
+            "username": "Autopkg",
+            "as_user": true,
+            "title": "Trust Info PR needs approval",
+            "color": "warning",
+            "text": "Recipe trust verification failed — a PR has been created to update trust info.\n<${{ env.TRUST_PR_URL }}|Review and approve the PR>",
+            "mrkdwn_in": ["text"]
+          }]
+        }
+        EOF
+        )"
