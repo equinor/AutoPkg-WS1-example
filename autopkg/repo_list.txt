@@ -14,9 +14,9 @@ https://github.com/autopkg/n8felton-recipes
 https://github.com/autopkg/gerardkok-recipes.git
 https://github.com/autopkg/dataJAR-recipes
 https://github.com/autopkg/jlehikoinen-recipes
-https://github.com/autopkg/valdore86-recipes
 https://github.com/autopkg/peshay-recipes
 https://github.com/autopkg/grahampugh-recipes
 https://github.com/autopkg/kevinmcox-recipes
 https://github.com/autopkg/precursorca-recipes
 https://github.com/autopkg/natewalck-recipes
+https://github.com/autopkg/jc0b-recipes
