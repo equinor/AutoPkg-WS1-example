@@ -1,27 +1,27 @@
 Identifier: local.ws1-pruner.PaloAltoNetworksGlobalProtect
 Input:
   NAME: Palo Alto Networks GlobalProtect
-  WS1_API_PASSWORD: API_PASSWORD_HERE
-  WS1_API_TOKEN: API_TOKEN_HERE
-  WS1_API_URL: WORKSPACEONE_API_URL_HERE
-  WS1_API_USERNAME: API_USERNAME_HERE
-  WS1_APP_VERSIONS_TO_KEEP: NUMBER_OF_VERSIONS_TO_KEEP_HERE
-  WS1_B64ENCODED_API_CREDENTIALS: B64ENCODED_API_CREDENTIALS_HERE
-  WS1_CONSOLE_URL: WORKSPACEONE_CONSOLE_URL_HERE
-  WS1_GROUPID: GROUP_ID_HERE
-  WS1_OAUTH_CLIENT_ID: OAUTH2_CLIENT_ID_HERE
-  WS1_OAUTH_CLIENT_SECRET: OAUTH2_CLIENT_CLIENT_SECRET_HERE
-  WS1_OAUTH_TOKEN_URL: OAUTH2_ACCESS_TOKEN_SERVER_URL_HERE
-  WS1_SAFEGUARD_HALT_ON_ASSIGNED: 'False'
+  WS1_API_PASSWORD: none
+  WS1_API_TOKEN: none
+  WS1_API_URL: none
+  WS1_API_USERNAME: none
+  WS1_APP_VERSIONS_TO_KEEP: '5'
+  WS1_B64ENCODED_API_CREDENTIALS: none
+  WS1_CONSOLE_URL: none
+  WS1_GROUPID: none
+  WS1_OAUTH_CLIENT_ID: none
+  WS1_OAUTH_CLIENT_SECRET: none
+  WS1_OAUTH_TOKEN_URL: none
+  WS1_PRUNE_SAFEGUARD_HALT_ON_ASSIGNED: 'False'
 ParentRecipe: com.github.codeskipper.ws1-pruner.PaloAltoNetworksGlobalProtect
 ParentRecipeTrustInfo:
   non_core_processors:
     com.github.codeskipper.OMNISSA-WorkSpaceOnePruner/WorkSpaceOnePruner:
-      git_hash: 7070b9589be9e910af3c70817f08e17781d7cdb5
+      git_hash: cb9eebad0b31a941638ecfb630581a01c09ca378
       path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOnePruner.py
-      sha256_hash: b83a08da867d104eee427eee9ba506362d0bc2db0736c6b71495518c0d4ec793
+      sha256_hash: ae781e4d90c7771559895dd6cc2438757416e49d699de8f2a5ccc561c897dfe4
   parent_recipes:
     com.github.codeskipper.ws1-pruner.PaloAltoNetworksGlobalProtect:
-      git_hash: de85f517c60fba1adeb56abd21d46cbe034876d7
+      git_hash: cb9eebad0b31a941638ecfb630581a01c09ca378
       path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/PaloAltoNetworksGlobalProtect.ws1-pruner.recipe.yaml
-      sha256_hash: 53b6c46943babed6781e5027061c4186ff9776aae54320a4294b0dc9782a2634
+      sha256_hash: 5f424c4185bdd3af91f8ff7623f3a52abf1f2aae9c8456062edff3d4498eee5f

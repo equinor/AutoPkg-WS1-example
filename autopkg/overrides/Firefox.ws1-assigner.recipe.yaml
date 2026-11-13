@@ -18,59 +18,60 @@ Input:
   WS1_PUSH_MODE: none
   WS1_SMART_GROUP_NAME: none
   ws1_app_assignments:
-  - distribution:
-      app_delivery_method: ON_DEMAND
-      description: |
-        Testing
-          macOS-SW-TESTING
-      display_in_app_catalog: true
-      distr_delay_days: '0'
-      is_default_assignment: false
-      keep_app_updated_automatically: true
-      name: TESTING
-      smart_group_names:
-      - macOS-SW-TESTING
-    restriction:
-      desired_state_management: false
-      managed_access: false
-      prevent_removal: false
-      remove_on_unenroll: false
-  - distribution:
-      app_delivery_method: ON_DEMAND
-      description: |
-        Early Access for new software versions
-          macOS-SW-EARLY_ACCESS
-      display_in_app_catalog: true
-      distr_delay_days: '3'
-      is_default_assignment: false
-      keep_app_updated_automatically: true
-      name: QA
-      smart_group_names:
-      - macOS-SW-EARLY_ACCESS
-    restriction:
-      desired_state_management: false
-      managed_access: false
-      prevent_removal: false
-      remove_on_unenroll: false
-  - distribution:
-      app_delivery_method: ON_DEMAND
-      description: On-Demand for macOS_MgtType-FULL
-      display_in_app_catalog: true
-      distr_delay_days: '14'
-      is_default_assignment: false
-      keep_app_updated_automatically: true
-      name: PROD
-      smart_group_names:
-      - macOS_MgtType-FULL
+    - distribution:
+        app_delivery_method: ON_DEMAND
+        description: |
+          Testing
+            macOS-SW-TESTING
+        display_in_app_catalog: true
+        distr_delay_days: '0'
+        is_default_assignment: false
+        keep_app_updated_automatically: true
+        name: TESTING
+        smart_group_names:
+          - macOS-SW-TESTING
+      restriction:
+        desired_state_management: false
+        managed_access: false
+        prevent_removal: false
+        remove_on_unenroll: false
+    - distribution:
+        app_delivery_method: ON_DEMAND
+        description: |
+          Early Access for new software versions
+            macOS-SW-EARLY_ACCESS
+        display_in_app_catalog: true
+        distr_delay_days: '3'
+        is_default_assignment: false
+        keep_app_updated_automatically: true
+        name: QA
+        smart_group_names:
+          - macOS-SW-EARLY_ACCESS
+      restriction:
+        desired_state_management: false
+        managed_access: false
+        prevent_removal: false
+        remove_on_unenroll: false
+    - distribution:
+        app_delivery_method: ON_DEMAND
+        description: On-Demand for macOS_MgtType-FULL
+        display_in_app_catalog: true
+        distr_delay_days: '14'
+        is_default_assignment: false
+        keep_app_updated_automatically: true
+        name: PROD
+        smart_group_names:
+          - macOS_MgtType-FULL
 ParentRecipe: com.github.codeskipper.ws1-assigner.MozillaFirefox
 ParentRecipeTrustInfo:
   non_core_processors:
     com.github.codeskipper.OMNISSA-WorkSpaceOneAssigner/WorkSpaceOneAssigner:
-      git_hash: f54e7feb6db9e3a359d657306886c3e0c087041a
-      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOneAssigner.py
-      sha256_hash: f5d4baf8b237be061a4d185eadba7a345e54acdd1830a6e7c26567622f8e1a34
+      git_hash: 22ce81bd54e2430ebb70d657b86bf85d622c42f4
+      path: ~/work/autopkg-cicd/autopkg-cicd/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOneAssigner.py
+      sha256_hash: b0320791553b91f12fa3d9b2a85dad2a3df88c1198f955ecb4a0dc8d2058b2d3
   parent_recipes:
     com.github.codeskipper.ws1-assigner.MozillaFirefox:
       git_hash: bfce9a6a0638d888f5c19e7303d58b08cc45e903
-      path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/Firefox.ws1-assigner.recipe.yaml
+      path: ~/work/autopkg-cicd/autopkg-cicd/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/Firefox.ws1-assigner.recipe.yaml
       sha256_hash: 46265d6fc1a9fa7ad1db6430de07117f845fb690fbfdfa7c56efb6b51ffebb0b
+  scripts: {}

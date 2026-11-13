@@ -8,7 +8,6 @@ JetBrainsToolbox-Intel.ws1-pruner.recipe.yaml
 JetBrainsToolbox-AppleSilicon.ws1-pruner.recipe.yaml
 MacAdminsPython.ws1-pruner.recipe.yaml
 DockerDesktop-AppleSilicon.ws1-pruner.recipe.yaml
-DockerDesktop-Intel.ws1-pruner.recipe.yaml
 GitHubCLI.ws1-pruner.recipe.yaml
 MicrosoftEdge.ws1-pruner.recipe.yaml
 GPGSuite.ws1-pruner.recipe.yaml
@@ -23,3 +22,5 @@ PaloAltoNetworksGlobalProtect.ws1-pruner.recipe.yaml
 MicrosoftTeams.ws1-pruner.recipe.yaml
 NodeJS-LTS.ws1-pruner.recipe.yaml
 Apparency.ws1-pruner.recipe.yaml
+PolyStudio.ws1-pruner.recipe.yaml
+Microsoft365Copilot.ws1-pruner.recipe.yaml

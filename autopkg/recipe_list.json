@@ -9,7 +9,6 @@
   "JetBrainsToolbox-AppleSilicon.ws1.recipe.yaml",
   "MacAdminsPython.ws1.recipe.yaml",
   "DockerDesktop-AppleSilicon.ws1.recipe.yaml",
-  "DockerDesktop-Intel.ws1.recipe.yaml",
   "GitHubCLI.ws1.recipe.yaml",
   "MicrosoftEdge.ws1.recipe.yaml",
   "GPGSuite.ws1.recipe.yaml",
@@ -23,5 +22,7 @@
   "PaloAltoNetworksGlobalProtect.ws1.recipe.yaml",
   "MicrosoftTeams.ws1.recipe.yaml",
   "NodeJS-LTS.ws1.recipe.yaml",
-  "Apparency.ws1.recipe.yaml"
+  "Apparency.ws1.recipe.yaml",
+  "PolyStudio.ws1.recipe.yaml",
+  "Microsoft365Copilot.ws1.recipe.yaml"
 ]
