@@ -1,8 +1,8 @@
-# Sync Changelog — 2026-11-13
+# Sync Changelog
 
-**22 commit(s)** since last sync.
+## 2026-11-13 — 22 commit(s), `577adda5`..`97dbcb27`
 
-## New Features & Enhancements
+### New Features & Enhancements
 
 - `bf32cd2b` ws1_sensor_upload: resolve remaining clear-text logging flows; document TLS inspection diagnosis
   
@@ -136,7 +136,7 @@
   
   Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
-## Other Changes
+### Other Changes
 
 - `6bcea7e4` gitignore: ignore Python bytecode and untrack committed __pycache__ files
   
@@ -159,3 +159,15 @@
 - `c431b024` Remove Docker Desktop Intel recipes from recipe lists
 - `5073b918` Update trust for MicrosoftVisualStudioCode.ws1-assigner DockerDesktop-Intel.ws1-assigner DockerDesktop-AppleSilicon.ws1-assigner JetBrainsToolbox-Intel.ws1-assigner JetBrainsToolbox-AppleSilicon.ws1-assigner Firefox.ws1-assigner SuspiciousPackage.ws1-assigner CitrixWorkspace.ws1-assigner MicrosoftDefender.ws1-assigner LastPass-Safari.ws1-assigner iTerm2.ws1-assigner MacAdminsPython.ws1-assigner GitHubCLI.ws1-assigner MicrosoftEdge.ws1-assigner GPGSuite.ws1-assigner GoogleChrome.ws1-assigner GitHubDesktop.ws1-assigner MicrosoftCompanyPortal.ws1-assigner MunkiAdmin.ws1-assigner LexmarkUniversalDriverColor.ws1-assigner erase-install.ws1-assigner PaloAltoNetworksGlobalProtect.ws1-assigner MicrosoftTeams.ws1-assigner NodeJS-LTS.ws1-assigner Apparency.ws1-assigner (assigner)
 - `2cd46e69` Update trust for Firefox.ws1 SuspiciousPackage.ws1 CitrixWorkspace.ws1 MicrosoftDefender.ws1 LastPass-Safari.ws1 iTerm2.ws1 JetBrainsToolbox-Intel.ws1 JetBrainsToolbox-AppleSilicon.ws1 DockerDesktop-AppleSilicon.ws1 DockerDesktop-Intel.ws1 MacAdminsPython.ws1 GitHubCLI.ws1 GoogleChrome.ws1 MicrosoftEdge.ws1 GitHubDesktop.ws1 GPGSuite.ws1 MicrosoftCompanyPortal.ws1 MunkiAdmin.ws1 LexmarkUniversalDriverColor.ws1 erase-install.ws1 PaloAltoNetworksGlobalProtect.ws1 MicrosoftVisualStudioCode.ws1 MicrosoftTeams.ws1 NodeJS-LTS.ws1 Apparency.ws1
+
+## Sync Changelog — 2026-07-08
+
+**1 commit(s)** since last sync.
+
+### New Features & Enhancements
+
+- `402acbee` replace valdore86-recipes due to repo deprecation...
+  
+  - replace valdore86-recipes repo with jc0b-recipes
+  - update repo_list.txt
+  - test new parent recipe for Visual Studio Code
