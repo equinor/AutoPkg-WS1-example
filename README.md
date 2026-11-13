@@ -31,8 +31,9 @@ This setup is adapted from, and builds on the example setup shared by Gusto Inc.
 We've supplied example overrides for Firefox and for Palo Alto GlobalProtect.
 
 * `autopkg_ws1-car.yml` - Checks out the latest version of your autopkg overrides, installs Munki and autopkg, then clones all the upstream recipe repos. We forked Facebook's `autopkg_tools.py` script, which iterates over a list of recipes, and successful builds are pushed into a separate Git LFS repo. The build results are posted to a Slack channel so we can fix any recipe trust issues with a pull request. This also runs hjuutilainen's VirusTotalAnalyzer post-processor.
-* `autopkg_ws1-assigner.yml` - performs automated staging by assigning the latest version of each package to a smart group in WS1 UEM. This is done by running the Assigner processor on the latest imported packages.  The settings in the recipe can be overridden to assign to different smart groups, or to assign to multiple smart groups.  And las but not least, you can set the number of days to wait before assigning a package to a smart group, so you can stage the latest version for testing in different groups before rolling it out to all Mac devices.
-* `autopkg_ws1-pruner.yml` - performs automated pruning of old versions of packages in WS1 UEM.  This is done by running the Pruner processor on the software title.  The settings in the recipe override can be changed to keep a specified number of versions.
+* `autopkg_ws1-assigner.yml` - performs automated staging by assigning the latest version of each package to a smart group in WS1 UEM. This is done by running the Assigner processor on the latest imported packages.  The settings in the recipe can be overridden to assign to different smart groups, or to assign to multiple smart groups.  And las but not least, you can set the number of days to wait before assigning a package to a smart group, so you can stage the latest version for testing in different groups before rolling it out to all Mac devices.  Recipe trust info is verified first with `autopkg_trust_check.py`; untrusted recipes are skipped and a single daily `trust-info-assigner-<date>` pull request with updated trust info is opened (and announced on Slack).
+* `autopkg_ws1-pruner.yml` - performs automated pruning of old versions of packages in WS1 UEM.  This is done by running the Pruner processor on the software title.  The settings in the recipe override can be changed to keep a specified number of versions.  Trust info is handled the same way as for the assigner (daily `trust-info-pruner-<date>` PR).
+  **Operator note:** pruner results are *not* posted to Slack - the `WorkSpaceOneSlacker` post-processor only reports importer results, so a `dry_run` (or a real prune) produces no notification. To see which versions are, or would be, pruned, open the job log in GitHub Actions (or the `autopkg_pruner.log` in the `autopkg-run-artifacts` artifact) and search for `TO BE PRUNED`. Review this before switching the `ws1_app_versions_prune` dispatch input from `dry_run` to `True`.
 * `munki_repoclean.yml` - Pares your Munki repo down to the five newest versions of each package.
 * `munki_repo_branch_merge.yml` merge git branches older than 1 month automatically and delete both local and remote
 
@@ -51,19 +52,37 @@ Following the runner setup steps will help prepare your local Mac.
 ### Using this repo
 1. Create an empty GitHub repo with Actions enabled
 1. Copy `workflows/` to `.github/` in this repo
-1. Create an override for the ws1 importer: `autopkg make-override  --format=yaml recipename.ws1.recipe.yaml`. Be sure to place overrides in `autopkg/overrides/`
-1. Add the recipe filename to `recipe_list.json`
-1. Add the repo's needed to `repo_list.txt`
-2. Create an override for the ws1 assigner: `autopkg make-override  --format=yaml recipename.ws1-assigner.recipe.yaml`
-2. Add the recipe to `recipe_list_assigner.txt`
-3. Create an override for the ws1 pruner: `autopkg make-override  --format=yaml recipename.ws1-pruner.recipe.yaml`
-4. Add the recipe to `recipe_list_pruner.txt`
+1. Generate and register the importer, assigner and pruner overrides for an app from the
+   [WorkSpaceOneImporter-recipes](https://github.com/autopkg/WorkSpaceOneImporter-recipes) repo (see [Adding a recipe](#adding-a-recipe)):
+   `uv run scripts/override_generator/generate_ws1_overrides.py recipename`
 1. Create another empty GitHub repo with Actions enabled. This will be your munki repo.
 1. In your Munki repo, create a [GitHub deploy key](https://docs.github.com/en/developers/overview/managing-deploy-keys#setup-2) with read/write access to repo.
 1. Copy the name of your Munki git repo to the `Checkout your munki LFS repo` step in `autopkg.yml`
 1. Add the private key for your Munki repo deploy key as a GitHub Actions secret named `CPE_MUNKI_LFS_DEPLOY_KEY` in your AutoPkg repo.
 1. Add the sensitive [WS1 specific input variables](https://github.com/autopkg/WorkSpaceOneImporter-recipes#available-input-variables) you need as GitHub Actions secrets
 1. Optionally, if using Slack, add Github Actions secrets for `SLACK_WEBHOOK_URL` (a URL to post AutoPkg results in Slack) and `SLACK_TOKEN`.
+
+
+### Adding a recipe
+Each app needs three local overrides in `autopkg/overrides/` — `<Name>.ws1.recipe.yaml` (importer), `<Name>.ws1-assigner.recipe.yaml` and `<Name>.ws1-pruner.recipe.yaml` — registered in `recipe_list.json`, `recipe_list_assigner.txt` and `recipe_list_pruner.txt` respectively. `scripts/override_generator/generate_ws1_overrides.py` does all of this from the upstream recipe triple:
+
+```zsh
+# preview (nothing written)
+uv run scripts/override_generator/generate_ws1_overrides.py PolyStudio --dry-run
+# generate + register
+uv run scripts/override_generator/generate_ws1_overrides.py PolyStudio
+# variant with an extra parent-recipe input and custom retention
+uv run scripts/override_generator/generate_ws1_overrides.py DockerDesktop --name DockerDesktop-Intel \
+    --set importer:PLATFORM_ARCH=amd64 --set pruner:WS1_APP_VERSIONS_TO_KEEP=12
+```
+
+Prerequisites: AutoPkg installed, recipe repos added (a launcher run does this and writes `autopkg/autopkg_prefs.plist`), and the app's `*.ws1*.recipe.yaml` recipes present in the `WorkSpaceOneImporter-recipes` checkout.
+
+What it does: runs `autopkg make-override --format=yaml` for each kind into a temp dir (so trust info is computed by AutoPkg), replaces upstream `*_HERE` placeholders with `none` (real values come from `AUTOPKG_WS1_*` env vars/secrets), applies the project defaults from `scripts/override_generator/templates/overrides_defaults.local.yaml` — or, if that organisation-specific file is absent, the generic `overrides_defaults.yaml` with placeholder `GROUP-*` smart group names, printing a NOTICE to create the `.local.yaml` for production — (staged TESTING → QA → PROD assignments, pruner retention `5`, `WS1_PRUNE_SAFEGUARD_HALT_ON_ASSIGNED: 'False'`), validates, writes, and registers. Existing files are never overwritten without `--force`; list updates are idempotent; if some of the three overrides already exist they must match the upstream set (Identifier, ParentRecipe, `NAME`) or the run is refused; `repo_list.txt` gains any recipe repo referenced by the trust info that is not yet listed.
+
+Exit code `2` = partial: the upstream repo lacks an assigner or pruner recipe for that app. Add it upstream first; the tool does not fabricate overrides. Review smart groups, delays and retention afterwards — they are administrator decisions. Verify with `autopkg verify-trust-info --prefs autopkg/autopkg_prefs.plist <Name>.ws1.recipe.yaml`. An agent skill with the full procedure lives in `.github/skills/add-ws1-recipe/SKILL.md`; tests: `uv run python -m unittest discover -s scripts/override_generator/tests`.
+
+Keep the override's `Input` minimal: only the `WS1_*: none` placeholders and keys you deliberately set locally (smart groups, retention, `PLATFORM_ARCH`…). `autopkg make-override` copies every inherited Input (`NAME`, `pkginfo`, `MUNKI_REPO_SUBDIR`, download URLs) into the override; remove those so the override keeps tracking upstream improvements instead of pinning a stale copy — note `pkginfo` is a dict that AutoPkg replaces wholesale, not merged. See `Microsoft365Copilot.ws1.recipe.yaml` for the trimmed shape.
 
 
 ### YAML support

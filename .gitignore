@@ -7,3 +7,7 @@
 /autopkg/repos/
 /autopkg/reports/
 /autopkg/autopkg_prefs.plist
+
+# Python bytecode
+__pycache__/
+*.pyc

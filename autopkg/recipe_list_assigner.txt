@@ -1,5 +1,4 @@
 MicrosoftVisualStudioCode.ws1-assigner.recipe.yaml
-DockerDesktop-Intel.ws1-assigner.recipe.yaml
 DockerDesktop-AppleSilicon.ws1-assigner.recipe.yaml
 JetBrainsToolbox-Intel.ws1-assigner.recipe.yaml
 JetBrainsToolbox-AppleSilicon.ws1-assigner.recipe.yaml
@@ -23,3 +22,5 @@ PaloAltoNetworksGlobalProtect.ws1-assigner.recipe.yaml
 MicrosoftTeams.ws1-assigner.recipe.yaml
 NodeJS-LTS.ws1-assigner.recipe.yaml
 Apparency.ws1-assigner.recipe.yaml
+PolyStudio.ws1-assigner.recipe.yaml
+Microsoft365Copilot.ws1-assigner.recipe.yaml

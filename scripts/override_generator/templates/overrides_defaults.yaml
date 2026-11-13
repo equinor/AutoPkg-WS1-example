@@ -1,0 +1,74 @@
+# Project defaults applied on top of `autopkg make-override` output by
+# scripts/override_generator/generate_ws1_overrides.py.
+#
+# - Keys under <kind>.Input are merged into the generated override's Input.
+# - The literal token {NAME} is replaced with the recipe's NAME input value.
+# - Upstream placeholder values (ending in _HERE) that are not covered here are
+#   replaced with `none`; real WS1 values are supplied at runtime as AUTOPKG_WS1_*
+#   environment variables / GitHub Actions secrets. Never put secrets in here.
+# - Smart group names, delays and retention are administrator decisions: review
+#   and adjust them per application after generation.
+#
+# This file is the GENERIC, publicly shareable default: the GROUP-* smart group
+# names are placeholders. For production, copy it to overrides_defaults.local.yaml
+# alongside this file and put your organisation's real smart group names there;
+# the generator prefers the .local.yaml file automatically when it exists.
+
+importer:
+  Input: {}
+
+assigner:
+  Input:
+    ws1_app_assignments:
+      - distribution:
+          app_delivery_method: ON_DEMAND
+          description: |
+            Testing
+              GROUP-TESTING
+          display_in_app_catalog: true
+          distr_delay_days: '0'
+          is_default_assignment: false
+          keep_app_updated_automatically: true
+          name: TESTING
+          smart_group_names:
+            - GROUP-TESTING
+        restriction:
+          desired_state_management: false
+          managed_access: false
+          prevent_removal: false
+          remove_on_unenroll: false
+      - distribution:
+          app_delivery_method: ON_DEMAND
+          description: |
+            Early Access for new software versions
+              GROUP-EARLY_ACCESS
+          display_in_app_catalog: true
+          distr_delay_days: '3'
+          is_default_assignment: false
+          keep_app_updated_automatically: true
+          name: QA
+          smart_group_names:
+            - GROUP-EARLY_ACCESS
+        restriction:
+          desired_state_management: false
+          managed_access: false
+          prevent_removal: false
+          remove_on_unenroll: false
+      - distribution:
+          app_delivery_method: ON_DEMAND
+          description: On-Demand for all managed Macs
+          display_in_app_catalog: true
+          distr_delay_days: '14'
+          is_default_assignment: false
+          keep_app_updated_automatically: true
+          name: PROD
+          smart_group_names:
+            - GROUP-PROD
+
+pruner:
+  Input:
+    # Repo policy defaults — review per app. Must be strings, not integers
+    # (processor requirement). WS1_PRUNE_SAFEGUARD_HALT_ON_ASSIGNED replaced the
+    # deprecated WS1_SAFEGUARD_HALT_ON_ASSIGNED upstream (this repo: PR #235).
+    WS1_APP_VERSIONS_TO_KEEP: '5'
+    WS1_PRUNE_SAFEGUARD_HALT_ON_ASSIGNED: 'False'

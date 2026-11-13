@@ -5,23 +5,23 @@ Input:
   WS1_API_TOKEN: none
   WS1_API_URL: none
   WS1_API_USERNAME: none
+  WS1_APP_VERSIONS_TO_KEEP: '8'
   WS1_B64ENCODED_API_CREDENTIALS: none
   WS1_CONSOLE_URL: none
   WS1_GROUPID: none
   WS1_OAUTH_CLIENT_ID: none
   WS1_OAUTH_CLIENT_SECRET: none
   WS1_OAUTH_TOKEN_URL: none
-  WS1_APP_VERSIONS_TO_KEEP: '8'
-  WS1_SAFEGUARD_HALT_ON_ASSIGNED: 'False'
+  WS1_PRUNE_SAFEGUARD_HALT_ON_ASSIGNED: 'False'
 ParentRecipe: com.github.codeskipper.ws1-pruner.MozillaFirefox
 ParentRecipeTrustInfo:
   non_core_processors:
     com.github.codeskipper.OMNISSA-WorkSpaceOnePruner/WorkSpaceOnePruner:
-      git_hash: 7070b9589be9e910af3c70817f08e17781d7cdb5
+      git_hash: cb9eebad0b31a941638ecfb630581a01c09ca378
       path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-processors/WorkSpaceOnePruner.py
-      sha256_hash: b83a08da867d104eee427eee9ba506362d0bc2db0736c6b71495518c0d4ec793
+      sha256_hash: ae781e4d90c7771559895dd6cc2438757416e49d699de8f2a5ccc561c897dfe4
   parent_recipes:
     com.github.codeskipper.ws1-pruner.MozillaFirefox:
-      git_hash: de85f517c60fba1adeb56abd21d46cbe034876d7
+      git_hash: cb9eebad0b31a941638ecfb630581a01c09ca378
       path: ~/<REDACTED>/autopkg/repos/com.github.autopkg.WorkSpaceOneImporter-recipes/ws1-recipes/Firefox.ws1-pruner.recipe.yaml
-      sha256_hash: 39b77bb1d78207a01f07585bf6387edd0fa2141810b8d4c4a4d920819681318e
+      sha256_hash: c0032d181fb5898adc8ec99f421ed0e5c41b47e3a33d939f103361944f00b083

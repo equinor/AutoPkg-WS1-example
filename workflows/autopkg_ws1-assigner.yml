@@ -7,7 +7,8 @@ run-name: AutoPkg Assigner recipes
 permissions:
 # workflow needs write permission for both contents and for pull-requests to be able to create PRs with diff for
 # parent recipe changes for updating trust info for recipe overrides
-  contents: read
+  contents: write
+  pull-requests: write
   actions: read
 
 on:
@@ -47,7 +48,8 @@ jobs:
   run-autopkg:
     runs-on: 'ubuntu-latest'
     permissions:
-      contents: read
+      contents: write
+      pull-requests: write
       actions: read
     steps:
     - name: Checkout repository
@@ -144,15 +146,47 @@ jobs:
           DISPATCH_WS1_UPDATE_ASSIGNMENTS: ${{ github.event.inputs.ws1_update_assignments }}
 
 
-    - name: Run AutoPkg Assigner recipes
+    - name: Configure Git
+      run: |
+        git config --global user.name "runner"
+        git config --global user.email "runner@githubactions.local"
+
+
+    - name: Verify recipe trust info
+      # Untrusted recipes are skipped in the run step; their overrides get updated trust info
+      # and are collected into a single daily trust-info PR for all assigner recipes.
       run: |
         if [[ -z "$RECIPE_TO_RUN" ]]; then
-          echo "no recipe specified in workflow dispatch as argument, using default recipe_list_assigner.txt"
-          TO_RUN=(--recipe-list autopkg/recipe_list_assigner.txt)  # use zsh array to be able to pass the argument with space in it as intended
+          SOURCE=(--recipe-list autopkg/recipe_list_assigner.txt)
         else
-          echo "using recipe specified in workflow dispatch as argument: $RECIPE_TO_RUN"
-          TO_RUN=("$RECIPE_TO_RUN")
+          SOURCE=(--recipe "$RECIPE_TO_RUN")
         fi
+        ../autopkg/.venv/bin/python3 autopkg_trust_check.py \
+          "${SOURCE[@]}" \
+          --autopkg-cmd "../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg" \
+          --prefs autopkg/prefs_linux.json \
+          --trusted-list-out "$RUNNER_TEMP/recipe_list_trusted.txt" \
+          --title-suffix "(assigner)" \
+          2>&1 | tee autopkg/logs/autopkg_assigner_trust.log
+        if [ -f pull_request_title ]; then
+          echo "TITLE=$(cat pull_request_title)" >> $GITHUB_ENV
+          echo "BODY<<EOF" >> $GITHUB_ENV
+          cat pull_request_body >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+        fi
+      env:
+          RECIPE_TO_RUN: ${{ github.event.inputs.recipe }}
+
+
+    - name: Run AutoPkg Assigner recipes
+      run: |
+        if [[ ! -s "$RUNNER_TEMP/recipe_list_trusted.txt" ]]; then
+          echo "No trusted recipes to run - skipping"
+          exit 0
+        fi
+        echo "Running recipes that passed trust verification:"
+        cat "$RUNNER_TEMP/recipe_list_trusted.txt"
+        TO_RUN=(--recipe-list "$RUNNER_TEMP/recipe_list_trusted.txt")  # use array to be able to pass the argument with space in it as intended
         # run using python3 shipped with AutoPkg
         # uv run /usr/local/autopkg/python /Library/AutoPkg/autopkg run "${TO_RUN[@]}" \
         ./../autopkg/.venv/bin/python3 ../autopkg/Code/autopkg run \
@@ -163,13 +197,62 @@ jobs:
           2>&1 | tee autopkg/logs/autopkg_assigner.log
       env:
           AUTOPKG_ws1_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          RECIPE_TO_RUN: ${{ github.event.inputs.recipe }}
           AUTOPKG_WS1_OAUTH_CLIENT_ID: ${{ SECRETS.WS1_OAUTH_CLIENT_ID }}
           AUTOPKG_WS1_OAUTH_CLIENT_SECRET: ${{ SECRETS.WS1_OAUTH_CLIENT_SECRET }}
           AUTOPKG_WS1_OAUTH_TOKEN_URL: ${{ SECRETS.WS1_OAUTH_TOKEN_URL }}
           AUTOPKG_WS1_API_URL: ${{ SECRETS.WS1_API_URL }}
           AUTOPKG_WS1_GROUPID: ${{ SECRETS.WS1_GROUPID }}
           AUTOPKG_WS1_CONSOLE_URL: ${{ SECRETS.WS1_CONSOLE_URL }}
+
+
+    - name: Create Trust Info pull request
+      # One PR per day for all assigner recipes; separate branch from the CAR importer's trust-info-<date>
+      # since both force-push their branch.
+      if: always() && env.TITLE
+      run: |
+        BRANCH_NAME="trust-info-assigner-$(date +'%Y-%m-%d')"
+        git fetch origin "$BRANCH_NAME" 2>/dev/null || true
+        git checkout -b "$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
+        git add autopkg/overrides/
+        if git diff --cached --quiet; then
+          echo "::warning::No override changes to commit - check update-trust-info output"
+          exit 0
+        fi
+        git commit -m "$TITLE"
+        git push --force-with-lease --set-upstream origin "$BRANCH_NAME"
+
+        EXISTING_PR=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+        if [ -n "$EXISTING_PR" ]; then
+          echo "Updating existing PR #${EXISTING_PR} with new trust info"
+          gh pr edit "$EXISTING_PR" --title "$TITLE" --body "$BODY"
+          PR_URL=$(gh pr view "$EXISTING_PR" --json url --jq .url)
+        else
+          echo "Creating new trust info PR"
+          PR_URL=$(gh pr create --head "$BRANCH_NAME" --base "${{ github.ref_name }}" --title "$TITLE" --body "$BODY")
+        fi
+        echo "TRUST_PR_URL=${PR_URL}" >> $GITHUB_ENV
+      env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Slack notification for Trust Info PR
+      if: always() && env.TRUST_PR_URL
+      run: |
+        jq -n --arg url "$TRUST_PR_URL" --arg title "$TITLE" '{
+          attachments: [{
+            username: "Autopkg",
+            as_user: true,
+            title: "Trust Info PR needs approval (assigner)",
+            color: "warning",
+            text: "Recipe trust verification failed — assigner recipe(s) were skipped and a PR has been created to update trust info.\n\($title)\n<\($url)|Review and approve the PR>",
+            mrkdwn_in: ["text"]
+          }]
+        }' | curl -s --request POST \
+          --url "$SLACK_WEBHOOK_URL" \
+          --header 'Content-Type: application/json' \
+          --data @-
+      env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
 
     - name: Upload Artifacts
@@ -182,3 +265,6 @@ jobs:
           autopkg/logs/autopkg_runner.log
           autopkg/logs/autopkg_assigner.log
           autopkg/logs/autopkg_pruner.log
+          autopkg/logs/autopkg_*_trust.log
+          pull_request_title
+          pull_request_body
